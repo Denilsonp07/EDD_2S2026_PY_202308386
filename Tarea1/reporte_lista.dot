@@ -1,0 +1,11 @@
+digraph ListaEnlazada {
+    rankdir=LR;
+    node [shape=record, style=filled, fillcolor=lightblue];
+    nodo0 [label="{ Dato: 5 | <ref> * }"];
+    nodo1 [label="{ Dato: 21 | <ref> * }"];
+    nodo2 [label="{ Dato: 12 | <ref> * }"];
+    nodo0:ref -> nodo1;
+    nodo1:ref -> nodo2;
+    null [shape=none, fillcolor=white, label="NULL"];
+    nodo2:ref -> null;
+}
