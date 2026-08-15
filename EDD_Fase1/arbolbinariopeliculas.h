@@ -37,6 +37,8 @@ private:
     void eliminarNodos(NodoArbolPeliculas* nodo);
     string quitarComillas(const string& campo);
     int numeroCodigo(const string& codigo) const;
+    void recorridoInorden(NodoArbolPeliculas* nodo);
+    void recolectarInorden(NodoArbolPeliculas* nodo, vector<Pelicula>& peliculas) const;
 
     public: 
 
@@ -45,8 +47,11 @@ private:
 
     bool estaVacio();
     void insertar(const Pelicula& pelicula);
+    void limpiar();
     void cargarCSV(const string& ruta);
     void generarDot();
+    void mostrarInorden();
+    vector<Pelicula> obtenerPeliculasInorden() const;
     
 };
 

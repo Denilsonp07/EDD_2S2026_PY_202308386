@@ -12,6 +12,11 @@ bool ArbolBinarioDeBusquedaPeliculas::estaVacio() {
     return raiz == nullptr;
 }
 
+void ArbolBinarioDeBusquedaPeliculas::limpiar() {
+    eliminarNodos(raiz);
+    raiz = nullptr;
+}
+
 void ArbolBinarioDeBusquedaPeliculas::insertar(const Pelicula& pelicula) {
 
     if(estaVacio()) {
@@ -153,4 +158,49 @@ void ArbolBinarioDeBusquedaPeliculas::eliminarNodos(NodoArbolPeliculas* nodo) {
         eliminarNodos(nodo->getDer());
         delete nodo;
     }
+}
+
+void ArbolBinarioDeBusquedaPeliculas::mostrarInorden() {
+    if (estaVacio()) {
+        std::cout << "Cartelera vacia. No hay películas para mostrar." << std::endl;
+    } else {
+        std::cout << "Cartelera de peliculas ordenada por codigo:" << std::endl;
+        recorridoInorden(raiz);
+        std::cout << "------------------------------------------" << std::endl;
+    }
+}
+
+void ArbolBinarioDeBusquedaPeliculas::recorridoInorden(NodoArbolPeliculas* nodo) {
+    if (nodo != nullptr) {
+
+        //  Ir todo lo posible hacia la IZQUIERDA (codigos menores)
+        recorridoInorden(nodo->getIzq());
+        
+        // Visitar/Imprimir la RAÍZ (el nodo actual), 
+        // esto imprimira automáticamente el codigo y el titulo.
+        cout << nodo->getPelicula() << endl;
+        
+        
+        // 3. Ir hacia la DERECHA (codigos mayores)
+        recorridoInorden(nodo->getDer());
+
+    }
+
+
+}
+
+void ArbolBinarioDeBusquedaPeliculas::recolectarInorden(NodoArbolPeliculas* nodo, vector<Pelicula>& peliculas) const {
+    if (nodo == nullptr) {
+        return;
+    }
+
+    recolectarInorden(nodo->getIzq(), peliculas);
+    peliculas.push_back(nodo->getPelicula());
+    recolectarInorden(nodo->getDer(), peliculas);
+}
+
+vector<Pelicula> ArbolBinarioDeBusquedaPeliculas::obtenerPeliculasInorden() const {
+    vector<Pelicula> peliculas;
+    recolectarInorden(raiz, peliculas);
+    return peliculas;
 }
