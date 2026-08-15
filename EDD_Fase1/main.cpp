@@ -1,6 +1,8 @@
 // #include "mainwindow.h"
 #include "login.h"
 #include "vistaadmin.h"
+#include "vistacliente.h"
+
 
 #include <QApplication>
 
@@ -13,6 +15,9 @@ int main(int argc, char *argv[])
 
     vistaAdmin ventanaAdmin;
     ventanaAdmin.show();
+
+    //vistaCliente ventanaCliente;
+    //ventanaCliente.show();
 
 
     return a.exec();

@@ -23,13 +23,13 @@
     </rect>
    </property>
    <property name="currentIndex">
-    <number>0</number>
+    <number>4</number>
    </property>
    <widget class="QWidget" name="tab">
     <attribute name="title">
      <string>Gestionar</string>
     </attribute>
-    <widget class="QTableWidget" name="tableWidget">
+    <widget class="QTableWidget" name="tbGestionar">
      <property name="geometry">
       <rect>
        <x>0</x>
@@ -80,7 +80,7 @@
     <attribute name="title">
      <string>Carga Masiva</string>
     </attribute>
-    <widget class="QTableWidget" name="tableWidget_2">
+    <widget class="QTableWidget" name="tbCargaMasiva">
      <property name="geometry">
       <rect>
        <x>0</x>
@@ -162,6 +162,63 @@
     <attribute name="title">
      <string>Mapa de Asientos</string>
     </attribute>
+   </widget>
+   <widget class="QWidget" name="tab_3">
+    <attribute name="title">
+     <string>Reportes</string>
+    </attribute>
+    <widget class="QPushButton" name="btnReporte1">
+     <property name="geometry">
+      <rect>
+       <x>30</x>
+       <y>30</y>
+       <width>90</width>
+       <height>29</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Reporte 1</string>
+     </property>
+    </widget>
+    <widget class="QPushButton" name="btnReporte2">
+     <property name="geometry">
+      <rect>
+       <x>160</x>
+       <y>30</y>
+       <width>90</width>
+       <height>29</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Reporte 2</string>
+     </property>
+    </widget>
+    <widget class="QPushButton" name="btnReporte3">
+     <property name="geometry">
+      <rect>
+       <x>290</x>
+       <y>30</y>
+       <width>90</width>
+       <height>29</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Reporte 3</string>
+     </property>
+    </widget>
+    <widget class="QPushButton" name="btnReporte4">
+     <property name="geometry">
+      <rect>
+       <x>420</x>
+       <y>30</y>
+       <width>90</width>
+       <height>29</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Reporte 4</string>
+     </property>
+    </widget>
    </widget>
   </widget>
   <widget class="QLabel" name="label">
