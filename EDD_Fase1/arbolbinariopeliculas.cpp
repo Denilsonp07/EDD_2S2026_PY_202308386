@@ -87,16 +87,20 @@ void ArbolBinarioDeBusquedaPeliculas::cargarCSV(const std::string& ruta) {
             continue;
         }
 
+        std::string campos[8];
+        int contadorCampos = 0;
         size_t inicio = 0;
-        std::vector<std::string> campos;
+
         for (size_t i = 0; i <= linea.size(); ++i) {
             if (i == linea.size() || linea[i] == ',') {
-                campos.push_back(quitarComillas(linea.substr(inicio, i - inicio)));
+                if (contadorCampos < 8) {
+                    campos[contadorCampos++] = quitarComillas(linea.substr(inicio, i - inicio));
+                }
                 inicio = i + 1;
             }
         }
 
-        if (campos.size() >= 8) {
+        if (contadorCampos >= 8) {
             Pelicula nuevaPelicula(campos[0], campos[1], campos[2], campos[3], campos[4], campos[5], campos[6], campos[7]);
             insertar(nuevaPelicula);
             insertados++;
@@ -189,7 +193,7 @@ void ArbolBinarioDeBusquedaPeliculas::recorridoInorden(NodoArbolPeliculas* nodo)
 
 }
 
-void ArbolBinarioDeBusquedaPeliculas::recolectarInorden(NodoArbolPeliculas* nodo, vector<Pelicula>& peliculas) const {
+void ArbolBinarioDeBusquedaPeliculas::recolectarInorden(NodoArbolPeliculas* nodo, ListaPeliculas& peliculas) const {
     if (nodo == nullptr) {
         return;
     }
@@ -199,8 +203,8 @@ void ArbolBinarioDeBusquedaPeliculas::recolectarInorden(NodoArbolPeliculas* nodo
     recolectarInorden(nodo->getDer(), peliculas);
 }
 
-vector<Pelicula> ArbolBinarioDeBusquedaPeliculas::obtenerPeliculasInorden() const {
-    vector<Pelicula> peliculas;
+ListaPeliculas ArbolBinarioDeBusquedaPeliculas::obtenerPeliculasInorden() const {
+    ListaPeliculas peliculas;
     recolectarInorden(raiz, peliculas);
     return peliculas;
 }

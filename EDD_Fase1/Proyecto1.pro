@@ -12,6 +12,7 @@ SOURCES += \
     login.cpp \
     main.cpp \
     mainwindow.cpp \
+    matrizdisperza.cpp \
     vistaadmin.cpp \
     vistacliente.cpp
 
@@ -20,6 +21,7 @@ HEADERS += \
     arbolbinariopeliculas.h \
     login.h \
     mainwindow.h \
+    matrizdisperza.h \
     vistaadmin.h \
     vistacliente.h
 

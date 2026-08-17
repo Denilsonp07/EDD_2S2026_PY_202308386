@@ -22,6 +22,8 @@ private:
 
 public: 
 
+    Pelicula();
+
     // Constructor
     Pelicula(const string& codigo, const string& titulo,
              const string& genero = "", const string& duracion = "", const string& clasificacion = "",

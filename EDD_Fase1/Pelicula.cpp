@@ -1,5 +1,9 @@
 #include "Pelicula.h"
 
+Pelicula::Pelicula()
+    : codigo(""), titulo(""), genero(""), duracion(""), clasificacion(""),
+      idioma(""), fecha_streno(""), fecha_fin("") {}
+
 Pelicula::Pelicula(const string& codigo, const string& titulo,
                    const string& genero, const string& duracion, const string& clasificacion,
                    const string& idioma, const string& fecha_streno, const string& fecha_fin)

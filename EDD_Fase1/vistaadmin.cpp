@@ -52,15 +52,15 @@ void vistaAdmin::configurarTablaGestionar()
     ui->tbGestionar->horizontalHeader()->setSectionResizeMode(QHeaderView::ResizeToContents);
 }
 
-void vistaAdmin::poblarTablaCargaMasiva()
+void vistaAdmin::llenarTablaCargaMasiva()
 {
-    const std::vector<Pelicula> peliculas = arbolPeliculas.obtenerPeliculasInorden();
+    const ListaPeliculas peliculas = arbolPeliculas.obtenerPeliculasInorden();
 
     ui->tbCargaMasiva->setRowCount(0);
-    ui->tbCargaMasiva->setRowCount(static_cast<int>(peliculas.size()));
+    ui->tbCargaMasiva->setRowCount(peliculas.size());
 
-    for (int fila = 0; fila < static_cast<int>(peliculas.size()); ++fila) {
-        const Pelicula& pelicula = peliculas[static_cast<size_t>(fila)];
+    for (int fila = 0; fila < peliculas.size(); ++fila) {
+        const Pelicula& pelicula = peliculas[fila];
 
         ui->tbCargaMasiva->setItem(fila, 0, new QTableWidgetItem(QString::fromStdString(pelicula.getCodigo())));
         ui->tbCargaMasiva->setItem(fila, 1, new QTableWidgetItem(QString::fromStdString(pelicula.getTitulo())));
@@ -75,15 +75,15 @@ void vistaAdmin::poblarTablaCargaMasiva()
     ui->tbCargaMasiva->resizeRowsToContents();
 }
 
-void vistaAdmin::poblarTablaGestionar()
+void vistaAdmin::llenarTablaGestionar()
 {
-    const std::vector<Pelicula> peliculas = arbolPeliculas.obtenerPeliculasInorden();
+    const ListaPeliculas peliculas = arbolPeliculas.obtenerPeliculasInorden();
 
     ui->tbGestionar->setRowCount(0);
-    ui->tbGestionar->setRowCount(static_cast<int>(peliculas.size()));
+    ui->tbGestionar->setRowCount(peliculas.size());
 
-    for (int fila = 0; fila < static_cast<int>(peliculas.size()); ++fila) {
-        const Pelicula& pelicula = peliculas[static_cast<size_t>(fila)];
+    for (int fila = 0; fila < peliculas.size(); ++fila) {
+        const Pelicula& pelicula = peliculas[fila];
 
         ui->tbGestionar->setItem(fila, 0, new QTableWidgetItem(QString::fromStdString(pelicula.getCodigo())));
         ui->tbGestionar->setItem(fila, 1, new QTableWidgetItem(QString::fromStdString(pelicula.getTitulo())));
@@ -112,8 +112,8 @@ void vistaAdmin::on_btnCargarPeli_clicked()
 
     arbolPeliculas.limpiar();
     arbolPeliculas.cargarCSV(rutaCsv.toStdString());
-    poblarTablaCargaMasiva();
-    poblarTablaGestionar();
+    llenarTablaCargaMasiva();
+    llenarTablaGestionar();
 
     QMessageBox::information(
         this,
