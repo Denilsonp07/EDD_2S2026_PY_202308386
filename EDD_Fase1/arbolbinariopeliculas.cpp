@@ -45,6 +45,55 @@ NodoArbolPeliculas* ArbolBinarioDeBusquedaPeliculas::insertarNodo(NodoArbolPelic
     return nodo;    
 }
 
+NodoArbolPeliculas* ArbolBinarioDeBusquedaPeliculas::obtenerNodoMinimo(NodoArbolPeliculas* nodo) const {
+    NodoArbolPeliculas* actual = nodo;
+    while (actual != nullptr && actual->getIzq() != nullptr) {
+        actual = actual->getIzq();
+    }
+    return actual;
+}
+
+NodoArbolPeliculas* ArbolBinarioDeBusquedaPeliculas::eliminarNodo(NodoArbolPeliculas* nodo, int codigoNumerico, bool& eliminado) {
+    if (nodo == nullptr) {
+        return nullptr;
+    }
+
+    const int codigoActual = numeroCodigo(nodo->getPelicula().getCodigo());
+
+    if (codigoNumerico < codigoActual) {
+        nodo->setIzq(eliminarNodo(nodo->getIzq(), codigoNumerico, eliminado));
+        return nodo;
+    }
+
+    if (codigoNumerico > codigoActual) {
+        nodo->setDer(eliminarNodo(nodo->getDer(), codigoNumerico, eliminado));
+        return nodo;
+    }
+
+    eliminado = true;
+
+    if (nodo->getIzq() == nullptr) {
+        NodoArbolPeliculas* derecha = nodo->getDer();
+        delete nodo;
+        return derecha;
+    }
+
+    if (nodo->getDer() == nullptr) {
+        NodoArbolPeliculas* izquierda = nodo->getIzq();
+        delete nodo;
+        return izquierda;
+    }
+
+    NodoArbolPeliculas* sucesor = obtenerNodoMinimo(nodo->getDer());
+    nodo->setPelicula(sucesor->getPelicula());
+
+    bool eliminadoSucesor = false;
+    const int codigoSucesor = numeroCodigo(sucesor->getPelicula().getCodigo());
+    nodo->setDer(eliminarNodo(nodo->getDer(), codigoSucesor, eliminadoSucesor));
+
+    return nodo;
+}
+
 int ArbolBinarioDeBusquedaPeliculas::numeroCodigo(const string& codigo) const {
     string digitos;
     for(char c : codigo){
@@ -207,4 +256,10 @@ ListaPeliculas ArbolBinarioDeBusquedaPeliculas::obtenerPeliculasInorden() const 
     ListaPeliculas peliculas;
     recolectarInorden(raiz, peliculas);
     return peliculas;
+}
+
+bool ArbolBinarioDeBusquedaPeliculas::eliminarPorCodigo(const string& codigo) {
+    bool eliminado = false;
+    raiz = eliminarNodo(raiz, numeroCodigo(codigo), eliminado);
+    return eliminado;
 }

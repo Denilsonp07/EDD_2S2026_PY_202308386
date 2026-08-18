@@ -24,6 +24,8 @@ private:
 
 private slots:
     void on_btnCargarPeli_clicked();
+    void on_btnAgregarPeli_clicked();
+    void on_btnEliminarPeli_clicked();
 
 private:
     Ui::vistaAdmin *ui;
