@@ -4,10 +4,14 @@
 
 
 #include <QString>
+#include <QDate>
 #include <QFileDialog>
 #include <QHeaderView>
 #include <QInputDialog>
 #include <QMessageBox>
+#include <QBrush>
+#include <QColor>
+#include <QStandardItemModel>
 #include <QStringList>
 #include <QTableWidgetItem>
 
@@ -18,6 +22,10 @@ vistaAdmin::vistaAdmin(QWidget *parent)
     ui->setupUi(this);
     configurarTablaCargaMasiva();
     configurarTablaGestionar();
+    configurarTablaCartelera();
+
+    ui->tabla_asientos->setEditTriggers(QAbstractItemView::NoEditTriggers);
+    ui->tabla_asientos->setSelectionMode(QAbstractItemView::NoSelection);
 
     ui->tabla_promociones->setColumnCount(4);
     ui->tabla_promociones->setHorizontalHeaderLabels(
@@ -40,6 +48,12 @@ vistaAdmin::~vistaAdmin()
 {
     delete ui;
 }
+
+//-------------------------------------------------------------------------------
+//                        CARGA MASIVA Y GESTION DE PELICULAS
+//-------------------------------------------------------------------------------
+
+
 
 void vistaAdmin::configurarTablaCargaMasiva()
 {
@@ -69,6 +83,21 @@ void vistaAdmin::configurarTablaGestionar()
     ui->tbGestionar->setSelectionMode(QAbstractItemView::SingleSelection);
     ui->tbGestionar->horizontalHeader()->setStretchLastSection(true);
     ui->tbGestionar->horizontalHeader()->setSectionResizeMode(QHeaderView::ResizeToContents);
+}
+
+void vistaAdmin::configurarTablaCartelera()
+{
+    ui->tbCartelera->setColumnCount(8);
+    ui->tbCartelera->setHorizontalHeaderLabels(
+        QStringList() << "Codigo" << "Titulo" << "Genero" << "Duracion"
+                      << "Clasificacion" << "Idioma" << "Fecha estreno" << "Fecha fin");
+
+    ui->tbCartelera->setRowCount(0);
+    ui->tbCartelera->setEditTriggers(QAbstractItemView::NoEditTriggers);
+    ui->tbCartelera->setSelectionBehavior(QAbstractItemView::SelectRows);
+    ui->tbCartelera->setSelectionMode(QAbstractItemView::SingleSelection);
+    ui->tbCartelera->horizontalHeader()->setStretchLastSection(true);
+    ui->tbCartelera->horizontalHeader()->setSectionResizeMode(QHeaderView::ResizeToContents);
 }
 
 void vistaAdmin::llenarTablaCargaMasiva()
@@ -117,6 +146,54 @@ void vistaAdmin::llenarTablaGestionar()
     ui->tbGestionar->resizeRowsToContents();
 }
 
+void vistaAdmin::llenarTablaCartelera()
+{
+    const ListaPeliculas peliculas = arbolPeliculas.obtenerPeliculasInorden();
+    const QDate fechaActual = QDate::currentDate();
+
+    ui->tbCartelera->setRowCount(0);
+    ui->tbCartelera->setRowCount(peliculas.size());
+
+    for (int fila = 0; fila < peliculas.size(); ++fila) {
+        const Pelicula& pelicula = peliculas[fila];
+
+        ui->tbCartelera->setItem(fila, 0, new QTableWidgetItem(QString::fromStdString(pelicula.getCodigo())));
+        ui->tbCartelera->setItem(fila, 1, new QTableWidgetItem(QString::fromStdString(pelicula.getTitulo())));
+        ui->tbCartelera->setItem(fila, 2, new QTableWidgetItem(QString::fromStdString(pelicula.getGenero())));
+        ui->tbCartelera->setItem(fila, 3, new QTableWidgetItem(QString::fromStdString(pelicula.getDuracion())));
+        ui->tbCartelera->setItem(fila, 4, new QTableWidgetItem(QString::fromStdString(pelicula.getClasificacion())));
+        ui->tbCartelera->setItem(fila, 5, new QTableWidgetItem(QString::fromStdString(pelicula.getIdioma())));
+        ui->tbCartelera->setItem(fila, 6, new QTableWidgetItem(QString::fromStdString(pelicula.getFechaEstreno())));
+        ui->tbCartelera->setItem(fila, 7, new QTableWidgetItem(QString::fromStdString(pelicula.getFechaFin())));
+
+        const QString fechaFinTexto = QString::fromStdString(pelicula.getFechaFin()).trimmed();
+        QDate fechaFin = QDate::fromString(fechaFinTexto, "yyyy-MM-dd");
+        if (!fechaFin.isValid()) {
+            fechaFin = QDate::fromString(fechaFinTexto, "dd/MM/yyyy");
+        }
+        if (!fechaFin.isValid()) {
+            fechaFin = QDate::fromString(fechaFinTexto, "dd-MM-yyyy");
+        }
+        if (!fechaFin.isValid()) {
+            fechaFin = QDate::fromString(fechaFinTexto, "d/M/yyyy");
+        }
+        if (!fechaFin.isValid()) {
+            fechaFin = QDate::fromString(fechaFinTexto, "d-M-yyyy");
+        }
+
+        const int diasRestantes = fechaActual.daysTo(fechaFin);
+        if (fechaFin.isValid() && diasRestantes >= 0 && diasRestantes < 7) {
+            for (int columna = 0; columna < ui->tbCartelera->columnCount(); ++columna) {
+                if (QTableWidgetItem* item = ui->tbCartelera->item(fila, columna)) {
+                    item->setBackground(QBrush(QColor("yellow")));
+                }
+            }
+        }
+    }
+
+    ui->tbCartelera->resizeRowsToContents();
+}
+
 void vistaAdmin::on_btnCargarPeli_clicked()
 {
     const QString rutaCsv = QFileDialog::getOpenFileName(
@@ -133,6 +210,7 @@ void vistaAdmin::on_btnCargarPeli_clicked()
     arbolPeliculas.cargarCSV(rutaCsv.toStdString());
     llenarTablaCargaMasiva();
     llenarTablaGestionar();
+    llenarTablaCartelera();
 
     QMessageBox::information(
         this,
@@ -206,6 +284,7 @@ void vistaAdmin::on_btnAgregarPeli_clicked()
 
     llenarTablaCargaMasiva();
     llenarTablaGestionar();
+    llenarTablaCartelera();
     QMessageBox::information(this, "Pelicula agregada", "La pelicula se agrego correctamente.");
 }
 
@@ -241,7 +320,90 @@ void vistaAdmin::on_btnEliminarPeli_clicked()
 
     llenarTablaCargaMasiva();
     llenarTablaGestionar();
+    llenarTablaCartelera();
     QMessageBox::information(this, "Pelicula eliminada", "La pelicula se elimino correctamente.");
+}
+
+
+
+
+//-------------------------------------------------------------------------------
+//                          FUNCIONES Y ASIENTOS
+//-------------------------------------------------------------------------------   
+
+
+
+
+void vistaAdmin::on_btnCrearFuncion_clicked()
+{
+    const int filaSeleccionada = ui->tbCartelera->currentRow();
+    if (filaSeleccionada < 0 || ui->tbCartelera->item(filaSeleccionada, 1) == nullptr) {
+        QMessageBox::warning(this, "Seleccion requerida", "Selecciona una pelicula de la cartelera.");
+        return;
+    }
+
+    bool ok = false;
+    const QString horario = QInputDialog::getItem(
+        this, "Horario de la funcion", "Selecciona o escribe un horario:",
+        QStringList() << "14:00" << "17:00" << "20:00", 0, true, &ok);
+    if (!ok || horario.trimmed().isEmpty()) {
+        return;
+    }
+
+    const QString sala = QInputDialog::getItem(
+        this, "Sala de la funcion", "Selecciona una sala:",
+        QStringList() << "Sala 1" << "Sala 2" << "Sala 3" << "Sala 4", 0, false, &ok);
+    if (!ok || sala.isEmpty()) {
+        return;
+    }
+
+    const int filas = ui->lineFilas->text().trimmed().toInt(&ok);
+    if (!ok || filas <= 0) {
+        QMessageBox::warning(this, "Filas invalidas", "Ingresa un numero de filas mayor que cero.");
+        return;
+    }
+
+    const int columnas = ui->lineColumnas->text().trimmed().toInt(&ok);
+    if (!ok || columnas <= 0) {
+        QMessageBox::warning(this, "Columnas invalidas", "Ingresa un numero de columnas mayor que cero.");
+        return;
+    }
+
+    Funcion funcion;
+    funcion.pelicula = ui->tbCartelera->item(filaSeleccionada, 1)->text();
+    funcion.horario = horario.trimmed();
+    funcion.sala = sala;
+    funcion.filas = filas;
+    funcion.columnas = columnas;
+    funcion.asientos = std::make_unique<MatrizDispersa>(filas, columnas);
+    funciones.push_back(std::move(funcion));
+
+    const Funcion& funcionCreada = funciones.back();
+    auto* modelo = new QStandardItemModel(funcionCreada.filas, funcionCreada.columnas, ui->tabla_asientos);
+    for (int fila = 0; fila < funcionCreada.filas; ++fila) {
+        for (int columna = 0; columna < funcionCreada.columnas; ++columna) {
+            auto* asiento = new QStandardItem("");
+            asiento->setTextAlignment(Qt::AlignCenter);
+            asiento->setBackground(QBrush(QColor("green")));
+            modelo->setItem(fila, columna, asiento);
+        }
+    }
+
+    for (int fila = 0; fila < funcionCreada.filas; ++fila) {
+        modelo->setHeaderData(fila, Qt::Vertical, QString::number(fila + 1));
+    }
+    for (int columna = 0; columna < funcionCreada.columnas; ++columna) {
+        modelo->setHeaderData(columna, Qt::Horizontal, QString::number(columna + 1));
+    }
+    ui->tabla_asientos->setModel(modelo);
+    ui->tabla_asientos->resizeColumnsToContents();
+
+    ui->labelFuncion->setText(
+        "Pelicula: " + funcionCreada.pelicula + " | " + funcionCreada.sala
+        + " | Horario: " + funcionCreada.horario);
+    ui->tabWidget->setCurrentWidget(ui->tab_8);
+
+    QMessageBox::information(this, "Funcion creada", "La funcion se creo con todos sus asientos libres.");
 }
 
 
