@@ -2,6 +2,8 @@
 #include "ui_vistaadmin.h"
 
 
+
+#include <QString>
 #include <QFileDialog>
 #include <QHeaderView>
 #include <QInputDialog>
@@ -16,6 +18,22 @@ vistaAdmin::vistaAdmin(QWidget *parent)
     ui->setupUi(this);
     configurarTablaCargaMasiva();
     configurarTablaGestionar();
+
+    ui->tabla_promociones->setColumnCount(4);
+    ui->tabla_promociones->setHorizontalHeaderLabels(
+        QStringList() << "Codigo" << "Nombre" << "Vigencia" << "Dias aplicables");
+    ui->tabla_promociones->setSelectionBehavior(QAbstractItemView::SelectRows);
+    ui->tabla_promociones->setSelectionMode(QAbstractItemView::SingleSelection);
+    ui->tabla_promociones->setEditTriggers(QAbstractItemView::NoEditTriggers);
+    ui->tabla_promociones->horizontalHeader()->setStretchLastSection(true);
+    ui->tabla_promociones->horizontalHeader()->setSectionResizeMode(QHeaderView::ResizeToContents);
+
+    ui->tabla_beneficios->setColumnCount(3);
+    ui->tabla_beneficios->setHorizontalHeaderLabels(
+        QStringList() << "Tipo" << "Descripcion" << "Valor");
+    ui->tabla_beneficios->setEditTriggers(QAbstractItemView::NoEditTriggers);
+    ui->tabla_beneficios->horizontalHeader()->setStretchLastSection(true);
+    ui->tabla_beneficios->horizontalHeader()->setSectionResizeMode(QHeaderView::ResizeToContents);
 }
 
 vistaAdmin::~vistaAdmin()
@@ -224,4 +242,169 @@ void vistaAdmin::on_btnEliminarPeli_clicked()
     llenarTablaCargaMasiva();
     llenarTablaGestionar();
     QMessageBox::information(this, "Pelicula eliminada", "La pelicula se elimino correctamente.");
+}
+
+
+
+
+
+//-------------------------------------------------------------------------------
+//                          PROMOCIONES Y BENEFICIOS
+//-------------------------------------------------------------------------------
+
+
+
+
+
+void vistaAdmin::on_btnNuevaPromo_clicked()
+{
+    const QString codigo = ui->txtCodigoPromo->text().trimmed();
+    const QString nombre = ui->txtNombrePromo->text().trimmed();
+    const QString vigencia = ui->txtVigenciaPromo->text().trimmed();
+    const QString dias = ui->txtDiasPromo->text().trimmed();
+
+    if (codigo.isEmpty() || nombre.isEmpty() || vigencia.isEmpty() || dias.isEmpty()) {
+        QMessageBox::warning(this, "Datos incompletos", "Completa todos los campos de la promocion.");
+        return;
+    }
+
+    if (miListaPromociones.buscarPromocion(codigo.toStdString()) != nullptr) {
+        QMessageBox::warning(this, "Codigo duplicado", "Ya existe una promocion con ese codigo.");
+        return;
+    }
+
+    miListaPromociones.insertarPromocion(
+        Promocion(codigo.toStdString(), nombre.toStdString(), vigencia.toStdString(), dias.toStdString()));
+
+    actualizarTablaPromociones();
+    ui->txtCodigoPromo->clear();
+    ui->txtNombrePromo->clear();
+    ui->txtVigenciaPromo->clear();
+    ui->txtDiasPromo->clear();
+    QMessageBox::information(this, "Promocion agregada", "La promocion se agrego correctamente.");
+}
+
+void vistaAdmin::on_btnEliminarPromo_clicked()
+{
+    const int fila = ui->tabla_promociones->currentRow();
+    if (fila < 0 || ui->tabla_promociones->item(fila, 0) == nullptr) {
+        QMessageBox::warning(this, "Seleccion requerida", "Selecciona una promocion para eliminar.");
+        return;
+    }
+
+    const QString codigo = ui->tabla_promociones->item(fila, 0)->text().trimmed();
+    if (miListaPromociones.eliminarPromocion(codigo.toStdString())) {
+        actualizarTablaPromociones();
+        ui->tabla_beneficios->setRowCount(0);
+        QMessageBox::information(this, "Promocion eliminada", "La promocion se elimino correctamente.");
+    }
+}
+
+void vistaAdmin::on_btnAnadirBene_clicked()
+{
+    const int fila = ui->tabla_promociones->currentRow();
+    if (fila < 0 || ui->tabla_promociones->item(fila, 0) == nullptr) {
+        QMessageBox::warning(this, "Seleccion requerida", "Selecciona una promocion para agregar el beneficio.");
+        return;
+    }
+
+    const QString codigoPromo = ui->tabla_promociones->item(fila, 0)->text().trimmed();
+    NodoPromocion* promocion = miListaPromociones.buscarPromocion(codigoPromo.toStdString());
+    if (promocion == nullptr) {
+        QMessageBox::warning(this, "Promocion no encontrada", "No se encontro la promocion seleccionada.");
+        return;
+    }
+
+    const QString tipo = ui->txtTipoBeneficio->text().trimmed();
+    const QString descripcion = ui->txtDescripcionBeneficio->text().trimmed();
+    const QString valor = ui->txtValorBeneficio->text().trimmed();
+    if (tipo.isEmpty() || descripcion.isEmpty() || valor.isEmpty()) {
+        QMessageBox::warning(this, "Datos incompletos", "Completa todos los campos del beneficio.");
+        return;
+    }
+
+    promocion->listaBeneficios.insertarFinal(
+        Beneficio(tipo.toStdString(), descripcion.toStdString(), valor.toStdString()));
+    actualizarTablaBeneficios(codigoPromo.toStdString());
+    ui->txtTipoBeneficio->clear();
+    ui->txtDescripcionBeneficio->clear();
+    ui->txtValorBeneficio->clear();
+    QMessageBox::information(this, "Beneficio agregado", "El beneficio se agrego correctamente.");
+}
+
+
+
+void vistaAdmin::actualizarTablaPromociones() {
+    ui->tabla_promociones->setRowCount(0); // Limpiar tabla
+
+    // 1. Obtenemos el primer nodo de la lista circular
+    NodoPromocion* actual = miListaPromociones.getCabeza();
+
+    // 2. Si la lista está vacía, no hacemos nada más
+    if (actual == nullptr) {
+        return; 
+    }
+
+    // 3. Recorremos la lista circular nodo por nodo directamente
+    do {
+        int fila = ui->tabla_promociones->rowCount();
+        ui->tabla_promociones->insertRow(fila);
+
+        // Extraemos los datos del nodo actual
+        Promocion p = actual->promocion;
+
+        ui->tabla_promociones->setItem(fila, 0, new QTableWidgetItem(QString::fromStdString(p.codigo)));
+        ui->tabla_promociones->setItem(fila, 1, new QTableWidgetItem(QString::fromStdString(p.nombre)));
+        ui->tabla_promociones->setItem(fila, 2, new QTableWidgetItem(QString::fromStdString(p.vigencia)));
+        ui->tabla_promociones->setItem(fila, 3, new QTableWidgetItem(QString::fromStdString(p.diasAplicables)));
+
+        // Saltamos al siguiente nodo
+        actual = actual->siguiente;
+
+    // Nos detenemos cuando el 'siguiente' vuelve a ser la cabeza
+    } while (actual != miListaPromociones.getCabeza()); 
+}
+
+
+
+
+void vistaAdmin::actualizarTablaBeneficios(std::string codigoPromo) {
+    ui->tabla_beneficios->setRowCount(0); // Limpiar tabla de beneficios
+
+    // 1. Buscamos el nodo de la promoción seleccionada
+    NodoPromocion* nodoPromo = miListaPromociones.buscarPromocion(codigoPromo);
+    
+    // Si no existe, dejamos la tabla en blanco y salimos
+    if (nodoPromo == nullptr) return; 
+
+    // 2. Obtenemos la cabeza de su Lista Doblemente Enlazada interna
+    NodoBeneficio* actual = nodoPromo->listaBeneficios.getCabeza();
+
+    // 3. Recorremos la lista linealmente
+    while (actual != nullptr) {
+        int fila = ui->tabla_beneficios->rowCount();
+        ui->tabla_beneficios->insertRow(fila);
+
+        // Extraemos los datos del beneficio
+        Beneficio b = actual->beneficio;
+
+        ui->tabla_beneficios->setItem(fila, 0, new QTableWidgetItem(QString::fromStdString(b.tipo)));
+        ui->tabla_beneficios->setItem(fila, 1, new QTableWidgetItem(QString::fromStdString(b.descripcion)));
+        ui->tabla_beneficios->setItem(fila, 2, new QTableWidgetItem(QString::fromStdString(b.valor)));
+
+        // Saltamos al siguiente beneficio
+        actual = actual->siguiente;
+    }
+}
+
+
+
+void vistaAdmin::on_tabla_promociones_cellClicked(int row, int column) {
+    Q_UNUSED(column);
+    if (ui->tabla_promociones->item(row, 0) == nullptr) {
+        return;
+    }
+
+    QString codigo = ui->tabla_promociones->item(row, 0)->text();
+    actualizarTablaBeneficios(codigo.toStdString());
 }

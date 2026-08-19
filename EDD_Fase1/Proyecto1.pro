@@ -9,6 +9,8 @@ CONFIG += c++17
 SOURCES += \
     Pelicula.cpp \
     arbolbinariopeliculas.cpp \
+    listabeneficios.cpp \
+    listapromociones.cpp \
     login.cpp \
     main.cpp \
     mainwindow.cpp \
@@ -19,6 +21,8 @@ SOURCES += \
 HEADERS += \
     Pelicula.h \
     arbolbinariopeliculas.h \
+    listabeneficios.h \
+    listapromociones.h \
     login.h \
     mainwindow.h \
     matrizdisperza.h \
