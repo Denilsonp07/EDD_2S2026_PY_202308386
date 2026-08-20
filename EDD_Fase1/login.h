@@ -17,6 +17,9 @@ public:
 
 private:
     Ui::login *ui;
+
+private slots:
+    void on_btnIngresar_clicked();
 };
 
 #endif // LOGIN_H

@@ -49,6 +49,14 @@ vistaAdmin::~vistaAdmin()
     delete ui;
 }
 
+void vistaAdmin::on_btnSalir_clicked()
+{
+    if (parentWidget() != nullptr) {
+        parentWidget()->show();
+    }
+    close();
+}
+
 //-------------------------------------------------------------------------------
 //                        CARGA MASIVA Y GESTION DE PELICULAS
 //-------------------------------------------------------------------------------

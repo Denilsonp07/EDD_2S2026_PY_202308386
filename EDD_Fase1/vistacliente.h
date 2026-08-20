@@ -17,6 +17,9 @@ public:
 
 private:
     Ui::vistaCliente *ui;
+
+private slots:
+    void on_btnSalir_clicked();
 };
 
 #endif // VISTACLIENTE_H

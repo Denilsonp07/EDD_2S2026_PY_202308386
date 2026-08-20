@@ -37,10 +37,12 @@ private slots:
     void on_btnAgregarPeli_clicked();
     void on_btnEliminarPeli_clicked();
     void on_btnCrearFuncion_clicked();
+    void on_btnSalir_clicked();
     void on_btnNuevaPromo_clicked();
     void on_btnEliminarPromo_clicked();
     void on_btnAnadirBene_clicked();
     void on_tabla_promociones_cellClicked(int row, int column);
+    
 
 private:
     Ui::vistaAdmin *ui;

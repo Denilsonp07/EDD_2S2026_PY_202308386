@@ -10,14 +10,8 @@ int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
 
-    //login ventanaLogin;
-    //ventanaLogin.show();
-
-    vistaAdmin ventanaAdmin;
-    ventanaAdmin.show();
-
-    //vistaCliente ventanaCliente;
-    //ventanaCliente.show();
+    login ventanaLogin;
+    ventanaLogin.show();
 
 
     return a.exec();

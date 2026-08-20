@@ -12,3 +12,11 @@ vistaCliente::~vistaCliente()
 {
     delete ui;
 }
+
+void vistaCliente::on_btnSalir_clicked()
+{
+    if (parentWidget() != nullptr) {
+        parentWidget()->show();
+    }
+    close();
+}
