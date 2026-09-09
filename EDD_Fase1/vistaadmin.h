@@ -3,12 +3,8 @@
 
 #include <QDialog>
 #include <QString>
-#include <memory>
-#include <vector>
 #include "arbolbinariopeliculas.h"
-#include "listapromociones.h"
-#include "listabeneficios.h"
-#include "matrizdisperza.h"
+#include "datoscine.h"
 
 namespace Ui {
 class vistaAdmin;
@@ -42,23 +38,13 @@ private slots:
     void on_btnEliminarPromo_clicked();
     void on_btnAnadirBene_clicked();
     void on_tabla_promociones_cellClicked(int row, int column);
+    void on_btnReporte1_clicked();
+    void on_btnReporte3_clicked();
+    void on_btnReporte4_clicked();
     
 
 private:
     Ui::vistaAdmin *ui;
-    ArbolBinarioDeBusquedaPeliculas arbolPeliculas;
-    ListaCircularPromociones miListaPromociones;
-
-    struct Funcion {
-        QString pelicula;
-        QString horario;
-        QString sala;
-        int filas;
-        int columnas;
-        std::unique_ptr<MatrizDispersa> asientos;
-    };
-
-    std::vector<Funcion> funciones;
 };
 
 #endif // VISTAADMIN_H

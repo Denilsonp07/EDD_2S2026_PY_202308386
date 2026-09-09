@@ -1,5 +1,41 @@
 #include "arbolbinariopeliculas.h"
 
+namespace {
+int fechaComoNumero(const std::string& fecha)
+{
+    std::string digitos;
+    for (char caracter : fecha) {
+        if (isdigit(static_cast<unsigned char>(caracter))) {
+            digitos += caracter;
+        }
+    }
+    if (digitos.size() != 8) {
+        return 0;
+    }
+
+    const int primero = atoi(digitos.substr(0, 4).c_str());
+    const int segundo = atoi(digitos.substr(4, 2).c_str());
+    const int tercero = atoi(digitos.substr(6, 2).c_str());
+    if (primero > 1900) {
+        return primero * 10000 + segundo * 100 + tercero;
+    }
+
+    return tercero * 10000 + segundo * 100 + primero;
+}
+
+std::string escaparGraphviz(const std::string& texto)
+{
+    std::string resultado;
+    for (char caracter : texto) {
+        if (caracter == '"' || caracter == '\\') {
+            resultado += '\\';
+        }
+        resultado += caracter;
+    }
+    return resultado;
+}
+}
+
 ArbolBinarioDeBusquedaPeliculas::ArbolBinarioDeBusquedaPeliculas() {
     raiz = nullptr;
 }
@@ -263,3 +299,61 @@ bool ArbolBinarioDeBusquedaPeliculas::eliminarPorCodigo(const string& codigo) {
     raiz = eliminarNodo(raiz, numeroCodigo(codigo), eliminado);
     return eliminado;
 }
+
+void ArbolBinarioDeBusquedaPeliculas::generarReporteAux(
+    NodoArbolPeliculas* nodo, std::ofstream& archivo, const string& fechaActual)
+{
+    if (nodo == nullptr) {
+        return;
+    }
+
+    const Pelicula& pelicula = nodo->getPelicula();
+    const int hoy = fechaComoNumero(fechaActual);
+    const int retiro = fechaComoNumero(pelicula.getFechaFin());
+    const bool vencida = retiro > 0 && retiro < hoy;
+    const bool proximaARetirar = !vencida && retiro > hoy && retiro <= hoy + 7;
+    const string color = vencida ? "#D5D8DC" : (proximaARetirar ? "#F4D03F" : "#7DCEA0");
+    const string codigo = escaparGraphviz(pelicula.getCodigo());
+    const string etiqueta = "Codigo: " + escaparGraphviz(pelicula.getCodigo()) + "\\n"
+        + "Titulo: " + escaparGraphviz(pelicula.getTitulo()) + "\\n"
+        + "Duracion: " + escaparGraphviz(pelicula.getDuracion()) + " min\\n"
+        + "Clasificacion: " + escaparGraphviz(pelicula.getClasificacion());
+
+    archivo << "\"" << codigo << "\" [shape=box, style=filled, fillcolor=\""
+            << color << "\", label=\"" << etiqueta << "\"];\n";
+    if (nodo->getIzq() != nullptr) {
+        archivo << "\"" << codigo << "\" -> \""
+                << escaparGraphviz(nodo->getIzq()->getPelicula().getCodigo()) << "\";\n";
+    }
+    if (nodo->getDer() != nullptr) {
+        archivo << "\"" << codigo << "\" -> \""
+                << escaparGraphviz(nodo->getDer()->getPelicula().getCodigo()) << "\";\n";
+    }
+
+    generarReporteAux(nodo->getIzq(), archivo, fechaActual);
+    generarReporteAux(nodo->getDer(), archivo, fechaActual);
+}
+
+bool ArbolBinarioDeBusquedaPeliculas::generarReporteCartelera(
+    const string& rutaDot, const string& rutaPng, const string& fechaActual) const
+{
+    std::ofstream archivo(rutaDot);
+    if (!archivo.is_open()) {
+        return false;
+    }
+
+    archivo << "digraph CarteleraPeliculas {\n"
+            << "rankdir=TB;\n"
+            << "bgcolor=white;\n"
+            << "node [fontname=Arial, color=black];\n"
+            << "edge [color=\"#566573\", arrowsize=0.8];\n";
+    const_cast<ArbolBinarioDeBusquedaPeliculas*>(this)->generarReporteAux(
+        raiz, archivo, fechaActual);
+    archivo << "}\n";
+    archivo.close();
+
+    const string comando = "dot -Tpng \"" + rutaDot + "\" -o \"" + rutaPng + "\"";
+    return system(comando.c_str()) == 0;
+}
+
+void AbolBinarioDeBusquedaPeliculas::contarNodosDeBST

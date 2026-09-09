@@ -113,6 +113,8 @@ private:
     NodoArbolPeliculas* eliminarNodo(NodoArbolPeliculas* nodo, int codigoNumerico, bool& eliminado);
     NodoArbolPeliculas* obtenerNodoMinimo(NodoArbolPeliculas* nodo) const;
     void generarDotAux(NodoArbolPeliculas* nodo, ofstream& archivo);
+    void generarReporteAux(NodoArbolPeliculas* nodo, ofstream& archivo,
+                           const string& fechaActual);
     void eliminarNodos(NodoArbolPeliculas* nodo);
     string quitarComillas(const string& campo);
     int numeroCodigo(const string& codigo) const;
@@ -129,6 +131,9 @@ private:
     void limpiar();
     void cargarCSV(const string& ruta);
     void generarDot();
+    bool generarReporteCartelera(const string& rutaDot,
+                                 const string& rutaPng,
+                                 const string& fechaActual) const;
     void mostrarInorden();
     ListaPeliculas obtenerPeliculasInorden() const;
     bool eliminarPorCodigo(const string& codigo);

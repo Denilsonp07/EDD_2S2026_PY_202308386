@@ -26,6 +26,7 @@ HEADERS += \
     login.h \
     mainwindow.h \
     matrizdisperza.h \
+    datoscine.h \
     vistaadmin.h \
     vistacliente.h
 

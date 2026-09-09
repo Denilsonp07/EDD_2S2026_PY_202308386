@@ -14,6 +14,9 @@
 #include <QStandardItemModel>
 #include <QStringList>
 #include <QTableWidgetItem>
+#include <QDate>
+#include <QCoreApplication>
+#include <QPixmap>
 
 vistaAdmin::vistaAdmin(QWidget *parent)
     : QDialog(parent)
@@ -26,6 +29,8 @@ vistaAdmin::vistaAdmin(QWidget *parent)
 
     ui->tabla_asientos->setEditTriggers(QAbstractItemView::NoEditTriggers);
     ui->tabla_asientos->setSelectionMode(QAbstractItemView::NoSelection);
+    ui->lblReporte3->hide();
+    ui->lblReporte4->hide();
 
     ui->tabla_promociones->setColumnCount(4);
     ui->tabla_promociones->setHorizontalHeaderLabels(
@@ -110,7 +115,7 @@ void vistaAdmin::configurarTablaCartelera()
 
 void vistaAdmin::llenarTablaCargaMasiva()
 {
-    const ListaPeliculas peliculas = arbolPeliculas.obtenerPeliculasInorden();
+    const ListaPeliculas peliculas = datosCine().arbolPeliculas.obtenerPeliculasInorden();
 
     ui->tbCargaMasiva->setRowCount(0);
     ui->tbCargaMasiva->setRowCount(peliculas.size());
@@ -133,7 +138,7 @@ void vistaAdmin::llenarTablaCargaMasiva()
 
 void vistaAdmin::llenarTablaGestionar()
 {
-    const ListaPeliculas peliculas = arbolPeliculas.obtenerPeliculasInorden();
+    const ListaPeliculas peliculas = datosCine().arbolPeliculas.obtenerPeliculasInorden();
 
     ui->tbGestionar->setRowCount(0);
     ui->tbGestionar->setRowCount(peliculas.size());
@@ -156,7 +161,7 @@ void vistaAdmin::llenarTablaGestionar()
 
 void vistaAdmin::llenarTablaCartelera()
 {
-    const ListaPeliculas peliculas = arbolPeliculas.obtenerPeliculasInorden();
+    const ListaPeliculas peliculas = datosCine().arbolPeliculas.obtenerPeliculasInorden();
     const QDate fechaActual = QDate::currentDate();
 
     ui->tbCartelera->setRowCount(0);
@@ -214,8 +219,8 @@ void vistaAdmin::on_btnCargarPeli_clicked()
         return;
     }
 
-    arbolPeliculas.limpiar();
-    arbolPeliculas.cargarCSV(rutaCsv.toStdString());
+    datosCine().arbolPeliculas.limpiar();
+    datosCine().arbolPeliculas.cargarCSV(rutaCsv.toStdString());
     llenarTablaCargaMasiva();
     llenarTablaGestionar();
     llenarTablaCartelera();
@@ -270,7 +275,7 @@ void vistaAdmin::on_btnAgregarPeli_clicked()
         return;
     }
 
-    const int totalAntes = arbolPeliculas.obtenerPeliculasInorden().size();
+    const int totalAntes = datosCine().arbolPeliculas.obtenerPeliculasInorden().size();
 
     Pelicula nuevaPelicula(
         codigo.toStdString(),
@@ -282,9 +287,9 @@ void vistaAdmin::on_btnAgregarPeli_clicked()
         fechaEstreno.toStdString(),
         fechaFin.toStdString());
 
-    arbolPeliculas.insertar(nuevaPelicula);
+    datosCine().arbolPeliculas.insertar(nuevaPelicula);
 
-    const int totalDespues = arbolPeliculas.obtenerPeliculasInorden().size();
+    const int totalDespues = datosCine().arbolPeliculas.obtenerPeliculasInorden().size();
     if (totalDespues == totalAntes) {
         QMessageBox::warning(this, "Codigo duplicado", "Ya existe una pelicula con ese codigo. No se agrego.");
         return;
@@ -320,7 +325,7 @@ void vistaAdmin::on_btnEliminarPeli_clicked()
         return;
     }
 
-    const bool eliminado = arbolPeliculas.eliminarPorCodigo(codigo.toStdString());
+    const bool eliminado = datosCine().arbolPeliculas.eliminarPorCodigo(codigo.toStdString());
     if (!eliminado) {
         QMessageBox::warning(this, "No encontrada", "No se encontro la pelicula a eliminar.");
         return;
@@ -377,16 +382,16 @@ void vistaAdmin::on_btnCrearFuncion_clicked()
         return;
     }
 
-    Funcion funcion;
-    funcion.pelicula = ui->tbCartelera->item(filaSeleccionada, 1)->text();
-    funcion.horario = horario.trimmed();
-    funcion.sala = sala;
-    funcion.filas = filas;
-    funcion.columnas = columnas;
-    funcion.asientos = std::make_unique<MatrizDispersa>(filas, columnas);
-    funciones.push_back(std::move(funcion));
+    FuncionCine* funcion = new FuncionCine();
+    funcion->pelicula = ui->tbCartelera->item(filaSeleccionada, 1)->text();
+    funcion->horario = horario.trimmed();
+    funcion->sala = sala;
+    funcion->filas = filas;
+    funcion->columnas = columnas;
+    funcion->asientos = new MatrizDispersa(filas, columnas);
+    datosCine().agregarFuncion(funcion);
 
-    const Funcion& funcionCreada = funciones.back();
+    const FuncionCine& funcionCreada = *funcion;
     auto* modelo = new QStandardItemModel(funcionCreada.filas, funcionCreada.columnas, ui->tabla_asientos);
     for (int fila = 0; fila < funcionCreada.filas; ++fila) {
         for (int columna = 0; columna < funcionCreada.columnas; ++columna) {
@@ -438,12 +443,12 @@ void vistaAdmin::on_btnNuevaPromo_clicked()
         return;
     }
 
-    if (miListaPromociones.buscarPromocion(codigo.toStdString()) != nullptr) {
+    if (datosCine().promociones.buscarPromocion(codigo.toStdString()) != nullptr) {
         QMessageBox::warning(this, "Codigo duplicado", "Ya existe una promocion con ese codigo.");
         return;
     }
 
-    miListaPromociones.insertarPromocion(
+    datosCine().promociones.insertarPromocion(
         Promocion(codigo.toStdString(), nombre.toStdString(), vigencia.toStdString(), dias.toStdString()));
 
     actualizarTablaPromociones();
@@ -463,7 +468,7 @@ void vistaAdmin::on_btnEliminarPromo_clicked()
     }
 
     const QString codigo = ui->tabla_promociones->item(fila, 0)->text().trimmed();
-    if (miListaPromociones.eliminarPromocion(codigo.toStdString())) {
+    if (datosCine().promociones.eliminarPromocion(codigo.toStdString())) {
         actualizarTablaPromociones();
         ui->tabla_beneficios->setRowCount(0);
         QMessageBox::information(this, "Promocion eliminada", "La promocion se elimino correctamente.");
@@ -479,7 +484,7 @@ void vistaAdmin::on_btnAnadirBene_clicked()
     }
 
     const QString codigoPromo = ui->tabla_promociones->item(fila, 0)->text().trimmed();
-    NodoPromocion* promocion = miListaPromociones.buscarPromocion(codigoPromo.toStdString());
+    NodoPromocion* promocion = datosCine().promociones.buscarPromocion(codigoPromo.toStdString());
     if (promocion == nullptr) {
         QMessageBox::warning(this, "Promocion no encontrada", "No se encontro la promocion seleccionada.");
         return;
@@ -508,7 +513,7 @@ void vistaAdmin::actualizarTablaPromociones() {
     ui->tabla_promociones->setRowCount(0); // Limpiar tabla
 
     // 1. Obtenemos el primer nodo de la lista circular
-    NodoPromocion* actual = miListaPromociones.getCabeza();
+    NodoPromocion* actual = datosCine().promociones.getCabeza();
 
     // 2. Si la lista está vacía, no hacemos nada más
     if (actual == nullptr) {
@@ -532,7 +537,7 @@ void vistaAdmin::actualizarTablaPromociones() {
         actual = actual->siguiente;
 
     // Nos detenemos cuando el 'siguiente' vuelve a ser la cabeza
-    } while (actual != miListaPromociones.getCabeza()); 
+    } while (actual != datosCine().promociones.getCabeza()); 
 }
 
 
@@ -542,7 +547,7 @@ void vistaAdmin::actualizarTablaBeneficios(std::string codigoPromo) {
     ui->tabla_beneficios->setRowCount(0); // Limpiar tabla de beneficios
 
     // 1. Buscamos el nodo de la promoción seleccionada
-    NodoPromocion* nodoPromo = miListaPromociones.buscarPromocion(codigoPromo);
+    NodoPromocion* nodoPromo = datosCine().promociones.buscarPromocion(codigoPromo);
     
     // Si no existe, dejamos la tabla en blanco y salimos
     if (nodoPromo == nullptr) return; 
@@ -577,4 +582,117 @@ void vistaAdmin::on_tabla_promociones_cellClicked(int row, int column) {
 
     QString codigo = ui->tabla_promociones->item(row, 0)->text();
     actualizarTablaBeneficios(codigo.toStdString());
+}
+
+void vistaAdmin::on_btnReporte1_clicked()
+{
+    ui->lblReporte1->show();
+    ui->lblReporte3->hide();
+    ui->lblReporte4->hide();
+    const QString carpeta = QCoreApplication::applicationDirPath();
+    const QString rutaDot = carpeta + "/reporte_cartelera.dot";
+    const QString rutaPng = carpeta + "/reporte_cartelera.png";
+    const QString fechaActual = QDate::currentDate().toString("yyyy-MM-dd");
+
+    if (datosCine().arbolPeliculas.estaVacio()) {
+        QMessageBox::warning(this, "Cartelera vacia", "No hay peliculas registradas para generar el reporte.");
+        return;
+    }
+    if (!datosCine().arbolPeliculas.generarReporteCartelera(
+            rutaDot.toStdString(), rutaPng.toStdString(), fechaActual.toStdString())) {
+        QMessageBox::critical(this, "Error de reporte", "No se pudo generar el grafo con Graphviz.");
+        return;
+    }
+
+    const QPixmap imagen(rutaPng);
+    if (imagen.isNull()) {
+        QMessageBox::critical(this, "Error de reporte", "Graphviz no genero una imagen valida.");
+        return;
+    }
+    ui->lblReporte1->setPixmap(imagen.scaled(
+        ui->lblReporte1->size(), Qt::KeepAspectRatio, Qt::SmoothTransformation));
+    ui->lblReporte1->setToolTip("Verde: en cartelera | Amarillo: proxima a retirar");
+}
+
+void vistaAdmin::on_btnReporte3_clicked()
+{
+    ui->lblReporte1->hide();
+    ui->lblReporte3->show();
+    ui->lblReporte4->hide();
+    const QString carpeta = QCoreApplication::applicationDirPath();
+    const QString rutaDot = carpeta + "/reporte_promociones_beneficios.dot";
+    const QString rutaPng = carpeta + "/reporte_promociones_beneficios.png";
+
+    if (!datosCine().promociones.generarReportePromociones(
+            rutaDot.toStdString(), rutaPng.toStdString())) {
+        QMessageBox::critical(this, "Error de reporte", "No se pudo generar el grafo de promociones y beneficios.");
+        return;
+    }
+
+    const QPixmap imagen(rutaPng);
+    if (imagen.isNull()) {
+        QMessageBox::critical(this, "Error de reporte", "Graphviz no genero una imagen valida.");
+        return;
+    }
+    ui->lblReporte3->setPixmap(imagen.scaled(
+        ui->lblReporte3->size(), Qt::KeepAspectRatio, Qt::SmoothTransformation));
+}
+
+void vistaAdmin::on_btnReporte4_clicked()
+{
+    if (datosCine().totalFunciones == 0) {
+        QMessageBox::warning(this, "Funciones vacias", "No hay funciones creadas para generar el mapa de asientos.");
+        return;
+    }
+
+    QStringList opciones;
+    for (int indice = 0; indice < datosCine().totalFunciones; ++indice) {
+        const FuncionCine* funcion = datosCine().obtenerFuncion(indice);
+        if (funcion != nullptr) {
+            opciones << funcion->pelicula + " - " + funcion->horario + " - " + funcion->sala;
+        }
+    }
+
+    bool ok = false;
+    const QString seleccion = QInputDialog::getItem(
+        this, "Seleccionar funcion", "Funcion para el reporte:", opciones, 0, false, &ok);
+    if (!ok || seleccion.isEmpty()) {
+        return;
+    }
+
+    int indiceFuncion = -1;
+    for (int indice = 0; indice < datosCine().totalFunciones; ++indice) {
+        const FuncionCine* funcion = datosCine().obtenerFuncion(indice);
+        if (funcion != nullptr && seleccion == funcion->pelicula + " - " + funcion->horario + " - " + funcion->sala) {
+            indiceFuncion = indice;
+            break;
+        }
+    }
+
+    FuncionCine* funcion = datosCine().obtenerFuncion(indiceFuncion);
+    if (funcion == nullptr) {
+        return;
+    }
+
+    const QString carpeta = QCoreApplication::applicationDirPath();
+    const QString rutaDot = carpeta + "/reporte_matriz_asientos.dot";
+    const QString rutaPng = carpeta + "/reporte_matriz_asientos.png";
+    const QString titulo = "Funcion: " + funcion->pelicula + " - " + funcion->horario
+        + " - " + funcion->sala;
+    if (!funcion->asientos->generarReporteAsientos(
+            titulo.toStdString(), rutaDot.toStdString(), rutaPng.toStdString())) {
+        QMessageBox::critical(this, "Error de reporte", "No se pudo generar el grafo de la matriz dispersa.");
+        return;
+    }
+
+    const QPixmap imagen(rutaPng);
+    if (imagen.isNull()) {
+        QMessageBox::critical(this, "Error de reporte", "Graphviz no genero una imagen valida.");
+        return;
+    }
+    ui->lblReporte1->hide();
+    ui->lblReporte3->hide();
+    ui->lblReporte4->show();
+    ui->lblReporte4->setPixmap(imagen.scaled(
+        ui->lblReporte4->size(), Qt::KeepAspectRatio, Qt::SmoothTransformation));
 }

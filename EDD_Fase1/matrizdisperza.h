@@ -71,6 +71,9 @@ public:
     int contarLibres();
 
     void generarDot(const std::string& tituloFuncion);
+    bool generarReporteAsientos(const std::string& tituloFuncion,
+                                const std::string& rutaDot,
+                                const std::string& rutaPng);
 };
 
 #endif

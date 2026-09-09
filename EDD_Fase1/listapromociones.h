@@ -4,6 +4,7 @@
 #include "listabeneficios.h"
 
 #include <iostream>
+#include <fstream>
 #include <string>
 
 
@@ -47,6 +48,8 @@ public:
     bool eliminarPromocion(const std::string& codigo);
     NodoPromocion* buscarPromocion(const std::string& codigo);
     void mostrarPromocionesYBeneficios() const;
+    bool generarReportePromociones(const std::string& rutaDot,
+                                   const std::string& rutaPng) const;
 
     // Devuelve el puntero al inicio de la lista circular
     NodoPromocion* getCabeza() const { return cabeza; }

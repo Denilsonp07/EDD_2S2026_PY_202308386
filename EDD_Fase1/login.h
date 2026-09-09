@@ -3,6 +3,9 @@
 
 #include <QDialog>
 
+class vistaAdmin;
+class vistaCliente;
+
 namespace Ui {
 class login;
 }
@@ -17,6 +20,8 @@ public:
 
 private:
     Ui::login *ui;
+    vistaAdmin* ventanaAdmin;
+    vistaCliente* ventanaCliente;
 
 private slots:
     void on_btnIngresar_clicked();

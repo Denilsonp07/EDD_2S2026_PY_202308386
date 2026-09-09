@@ -23,7 +23,7 @@
     </rect>
    </property>
    <property name="currentIndex">
-    <number>0</number>
+    <number>6</number>
    </property>
    <widget class="QWidget" name="tab">
     <attribute name="title">
@@ -221,6 +221,9 @@
        <width>110</width>
        <height>28</height>
       </rect>
+     </property>
+     <property name="placeholderText">
+      <string>2026-08-01 / 2026-08-31</string>
      </property>
     </widget>
     <widget class="QLabel" name="labelDiasPromo">
@@ -503,6 +506,57 @@
      </property>
      <property name="text">
       <string>Reporte 4</string>
+     </property>
+    </widget>
+    <widget class="QLabel" name="lblReporte1">
+     <property name="geometry">
+      <rect>
+       <x>30</x>
+       <y>75</y>
+       <width>991</width>
+       <height>465</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Presiona Reporte 1 para visualizar el arbol de peliculas</string>
+     </property>
+     <property name="scaledContents">
+      <bool>false</bool>
+     </property>
+     <property name="alignment">
+      <set>Qt::AlignmentFlag::AlignCenter</set>
+     </property>
+    </widget>
+    <widget class="QLabel" name="lblReporte3">
+     <property name="geometry">
+      <rect>
+       <x>30</x>
+       <y>75</y>
+       <width>991</width>
+       <height>465</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Presiona Reporte 3 para visualizar promociones y beneficios</string>
+     </property>
+     <property name="alignment">
+      <set>Qt::AlignmentFlag::AlignCenter</set>
+     </property>
+    </widget>
+    <widget class="QLabel" name="lblReporte4">
+     <property name="geometry">
+      <rect>
+       <x>30</x>
+       <y>75</y>
+       <width>991</width>
+       <height>465</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Presiona Reporte 4 para visualizar el mapa de asientos</string>
+     </property>
+     <property name="alignment">
+      <set>Qt::AlignmentFlag::AlignCenter</set>
      </property>
     </widget>
    </widget>

@@ -8,6 +8,8 @@
 login::login(QWidget *parent)
     : QDialog(parent)
     , ui(new Ui::login)
+    , ventanaAdmin(nullptr)
+    , ventanaCliente(nullptr)
 {
     ui->setupUi(this);
 }
@@ -24,9 +26,15 @@ void login::on_btnIngresar_clicked()
 
     QDialog* ventanaDestino = nullptr;
     if (usuario == "admin" && contrasena == "admin123") {
-        ventanaDestino = new vistaAdmin(this);
+        if (ventanaAdmin == nullptr) {
+            ventanaAdmin = new vistaAdmin(this);
+        }
+        ventanaDestino = ventanaAdmin;
     } else if (usuario == "usuario" && contrasena == "usuario123") {
-        ventanaDestino = new vistaCliente(this);
+        if (ventanaCliente == nullptr) {
+            ventanaCliente = new vistaCliente(this);
+        }
+        ventanaDestino = ventanaCliente;
     } else {
         QMessageBox::warning(
             this,
@@ -37,7 +45,7 @@ void login::on_btnIngresar_clicked()
         return;
     }
 
-    ventanaDestino->setAttribute(Qt::WA_DeleteOnClose);
+    ventanaDestino->setAttribute(Qt::WA_DeleteOnClose, false);
     ui->lineEdit->clear();
     ui->lineEdit_2->clear();
     ventanaDestino->show();
