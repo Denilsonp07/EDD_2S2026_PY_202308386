@@ -116,10 +116,19 @@ private:
     void generarReporteAux(NodoArbolPeliculas* nodo, ofstream& archivo,
                            const string& fechaActual);
     void eliminarNodos(NodoArbolPeliculas* nodo);
-    string quitarComillas(const string& campo);
     int numeroCodigo(const string& codigo) const;
     void recorridoInorden(NodoArbolPeliculas* nodo);
     void recolectarInorden(NodoArbolPeliculas* nodo, ListaPeliculas& peliculas) const;
+    
+
+    //METODOS FASEEEE 2
+    
+    void recolectarPreorden(NodoArbolPeliculas* nodo, ListaPeliculas& peliculas) const;
+    void recolectarPostorden(NodoArbolPeliculas* nodo, ListaPeliculas& peliculas) const;
+
+    
+
+
 
     public: 
 
@@ -129,7 +138,6 @@ private:
     bool estaVacio();
     void insertar(const Pelicula& pelicula);
     void limpiar();
-    void cargarCSV(const string& ruta);
     void generarDot();
     bool generarReporteCartelera(const string& rutaDot,
                                  const string& rutaPng,
@@ -137,6 +145,15 @@ private:
     void mostrarInorden();
     ListaPeliculas obtenerPeliculasInorden() const;
     bool eliminarPorCodigo(const string& codigo);
+
+    //METODOS FASEEEE 2
+
+    ListaPeliculas obtenerPeliculasPreorden() const;
+    ListaPeliculas obtenerPeliculasPostorden() const;
+
+    Pelicula* buscarPorCodigo(const string& codigo); 
+
+    void cargarJSON(const string& ruta);
     
 };
 

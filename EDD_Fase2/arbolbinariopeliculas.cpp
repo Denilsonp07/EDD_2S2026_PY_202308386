@@ -1,5 +1,10 @@
 #include "arbolbinariopeliculas.h"
 
+#include "json.hpp"
+#include <fstream>
+#include <iostream>
+
+
 namespace {
 int fechaComoNumero(const std::string& fecha)
 {
@@ -142,59 +147,6 @@ int ArbolBinarioDeBusquedaPeliculas::numeroCodigo(const string& codigo) const {
     
 }
 
-
-std::string ArbolBinarioDeBusquedaPeliculas::quitarComillas(const std::string& campo) {
-    std::string resultado = campo;
-    if (resultado.size() >= 2 && resultado.front() == '"' && resultado.back() == '"') {
-        resultado = resultado.substr(1, resultado.size() - 2);
-    }
-    return resultado;
-
-}
-
-
-void ArbolBinarioDeBusquedaPeliculas::cargarCSV(const std::string& ruta) {
-    std::ifstream archivo(ruta);
-    if (!archivo.is_open()) {
-        std::cout << "No se pudo abrir el archivo '" << ruta << "'." << std::endl;
-        return;
-    }
-
-    std::string linea;
-    bool encabezado = true;
-    int insertados = 0;
-
-    while (getline(archivo, linea)) {
-        if (linea.empty()) continue;
-
-        if (encabezado) {
-            encabezado = false;
-            continue;
-        }
-
-        std::string campos[8];
-        int contadorCampos = 0;
-        size_t inicio = 0;
-
-        for (size_t i = 0; i <= linea.size(); ++i) {
-            if (i == linea.size() || linea[i] == ',') {
-                if (contadorCampos < 8) {
-                    campos[contadorCampos++] = quitarComillas(linea.substr(inicio, i - inicio));
-                }
-                inicio = i + 1;
-            }
-        }
-
-        if (contadorCampos >= 8) {
-            Pelicula nuevaPelicula(campos[0], campos[1], campos[2], campos[3], campos[4], campos[5], campos[6], campos[7]);
-            insertar(nuevaPelicula);
-            insertados++;
-        }
-    }
-
-    archivo.close();
-    std::cout << "Se cargaron " << insertados << " peliculas desde '" << ruta << "'." << std::endl;
-}
 
 void ArbolBinarioDeBusquedaPeliculas::generarDotAux(NodoArbolPeliculas* nodo, std::ofstream& archivo) {
     if (nodo != nullptr) {
@@ -356,4 +308,108 @@ bool ArbolBinarioDeBusquedaPeliculas::generarReporteCartelera(
     return system(comando.c_str()) == 0;
 }
 
-void AbolBinarioDeBusquedaPeliculas::contarNodosDeBST
+
+
+//----------------------------------------------------------
+//                     METODOS FASE 2
+//----------------------------------------------------------
+
+
+
+
+void ArbolBinarioDeBusquedaPeliculas::recolectarPreorden(NodoArbolPeliculas* nodo, ListaPeliculas& peliculas) const {
+    if (nodo == nullptr) {
+        return;
+    }
+    peliculas.push_back(nodo->getPelicula());
+    recolectarPreorden(nodo->getIzq(), peliculas);
+    recolectarPreorden(nodo->getDer(), peliculas);
+}
+
+void ArbolBinarioDeBusquedaPeliculas::recolectarPostorden(NodoArbolPeliculas* nodo, ListaPeliculas& peliculas) const {
+    if (nodo == nullptr) {
+        return;
+    }
+    recolectarPostorden(nodo->getIzq(), peliculas);
+    recolectarPostorden(nodo->getDer(), peliculas);
+    peliculas.push_back(nodo->getPelicula());
+}
+
+ListaPeliculas ArbolBinarioDeBusquedaPeliculas::obtenerPeliculasPreorden() const {
+    ListaPeliculas peliculas;
+    recolectarPreorden(raiz, peliculas);
+    return peliculas;
+}
+
+ListaPeliculas ArbolBinarioDeBusquedaPeliculas::obtenerPeliculasPostorden() const {
+    ListaPeliculas peliculas;
+    recolectarPostorden(raiz, peliculas);
+    return peliculas;
+}
+
+Pelicula* ArbolBinarioDeBusquedaPeliculas::buscarPorCodigo(const string& codigo) {
+    NodoArbolPeliculas* actual = raiz;
+    int codBuscado = numeroCodigo(codigo);
+
+    while (actual != nullptr){
+
+        int codActual = numeroCodigo(actual->getPelicula().getCodigo());
+        if (codBuscado == codActual) {
+            return &(actual->getPelicula());
+        } else if (codBuscado < codActual) {
+            actual = actual->getIzq();
+        } else {
+            actual = actual->getDer();
+        }
+
+    }
+    return nullptr;
+}
+
+using json = nlohmann::json;
+
+void ArbolBinarioDeBusquedaPeliculas::cargarJSON(const std::string& ruta) {
+    std::ifstream archivo(ruta);
+    if (!archivo.is_open()) {
+        std::cout << "No se pudo abrir el archivo JSON '" << ruta << "'." << std::endl;
+        return;
+    }
+
+    try {
+        json datosJson;
+        archivo >> datosJson;
+
+        int insertados = 0;
+
+        // Iterar sobre el arreglo "peliculas" del JSON
+        for (const auto& item : datosJson["peliculas"]) {
+            std::string codigo = item["codigo"];
+            std::string titulo = item["titulo"];
+            std::string genero = item["genero"];
+
+            // Convertir duración de número a string para mantener compatibilidad con tu clase Pelicula
+            std::string duracion = std::to_string((int)item["duracion"]); 
+            std::string clasificacion = item["clasificacion"];
+            std::string idioma = item["idioma"];
+            std::string fechaEstreno = item["fecha estreno"];
+            std::string fechaFin = item["fecha fin"];
+
+            Pelicula nuevaPelicula(codigo, titulo, genero, duracion, clasificacion, idioma, fechaEstreno, fechaFin);
+            insertar(nuevaPelicula);
+            insertados++;
+
+            // Nota: Aqui se encuentra el arreglo item["funciones"][cite: 1]. 
+            // Se puede extraer posteriormente para enviarlo al arbol AVL.
+        }
+
+        std::cout << "Se cargaron " << insertados << " peliculas desde '" << ruta << "'." << std::endl;
+
+    } catch (json::parse_error& e) {
+        std::cout << "Error al parsear el JSON: " << e.what() << std::endl;
+    }
+
+    archivo.close();
+}
+
+
+
