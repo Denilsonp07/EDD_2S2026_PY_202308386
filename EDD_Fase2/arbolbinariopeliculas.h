@@ -5,6 +5,8 @@
 #include <fstream>
 #include <string>
 
+#include "arbolavlfunciones.h"
+
 class ListaPeliculas {
 private:
     Pelicula* datos;
@@ -153,7 +155,8 @@ private:
 
     Pelicula* buscarPorCodigo(const string& codigo); 
 
-    void cargarJSON(const string& ruta);
+    void cargarJSON(const string& ruta, ArbolAVLFunciones& arbolFunciones);
+    
     
 };
 

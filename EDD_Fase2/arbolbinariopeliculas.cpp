@@ -368,7 +368,7 @@ Pelicula* ArbolBinarioDeBusquedaPeliculas::buscarPorCodigo(const string& codigo)
 
 using json = nlohmann::json;
 
-void ArbolBinarioDeBusquedaPeliculas::cargarJSON(const std::string& ruta) {
+void ArbolBinarioDeBusquedaPeliculas::cargarJSON(const std::string& ruta, ArbolAVLFunciones& arbolFunciones) {
     std::ifstream archivo(ruta);
     if (!archivo.is_open()) {
         std::cout << "No se pudo abrir el archivo JSON '" << ruta << "'." << std::endl;
@@ -398,7 +398,7 @@ void ArbolBinarioDeBusquedaPeliculas::cargarJSON(const std::string& ruta) {
             insertar(nuevaPelicula);
             insertados++;
 
-            // Nota: Aqui se encuentra el arreglo item["funciones"][cite: 1]. 
+            // Nota: Aqui se encuentra el arreglo item["funciones"] 
             // Se puede extraer posteriormente para enviarlo al arbol AVL.
         }
 
@@ -411,5 +411,68 @@ void ArbolBinarioDeBusquedaPeliculas::cargarJSON(const std::string& ruta) {
     archivo.close();
 }
 
+using json = nlohmann::json;
+
+void ArbolBinarioDeBusquedaPeliculas::cargarJSON(const std::string& ruta, ArbolAVLFunciones& arbolFunciones) {
+    std::ifstream archivo(ruta);
+    if (!archivo.is_open()) {
+        std::cout << "No se pudo abrir el archivo JSON '" << ruta << "'." << std::endl;
+        return;
+    }
+
+    try {
+        json datosJson;
+        archivo >> datosJson;
+
+        int peliculasInsertadas = 0;
+        int funcionesInsertadas = 0;
+
+        // 1. Iterar sobre el arreglo principal de películas
+        for (const auto& itemPelicula : datosJson["peliculas"]) {
+            
+            std::string codigoPeli = itemPelicula["codigo"];
+            std::string titulo = itemPelicula["titulo"];
+            std::string genero = itemPelicula["genero"];
+            std::string duracion = std::to_string((int)itemPelicula["duracion"]); 
+            std::string clasificacion = itemPelicula["clasificacion"];
+            std::string idioma = itemPelicula["idioma"];
+            std::string fechaEstreno = itemPelicula["fecha estreno"];
+            std::string fechaFin = itemPelicula["fecha fin"];
+
+            // Insertar pelicula en el BST
+            Pelicula nuevaPelicula(codigoPeli, titulo, genero, duracion, clasificacion, idioma, fechaEstreno, fechaFin);
+            insertar(nuevaPelicula);
+            peliculasInsertadas++;
+
+            // 2. Extraer el arreglo anidado de funciones de esta película especifica
+            if (itemPelicula.contains("funciones")) {
+                for (const auto& itemFuncion : itemPelicula["funciones"]) {
+                    std::string codFuncion = itemFuncion["codigo_funcion"];
+                    std::string horario = itemFuncion["horario"];
+                    std::string sala = itemFuncion["sala"];
+                    int filas = itemFuncion["filas"];
+                    int columnas = itemFuncion["columnas"];
+
+                    // Crear el objeto funcion vinculandolo al codigo de su pelicula
+                    Funcion nuevaFuncion(codFuncion, codigoPeli, horario, sala, filas, columnas);
+                    
+                    // Insertar en el arbol AVL
+                    // Nota: El metodo insertar() del AVL le asignara automaticamente 
+                    // su archivo_asientos vacio ("F00X_funcion.json") segun el requerimiento
+                    arbolFunciones.insertar(nuevaFuncion);
+                    funcionesInsertadas++;
+                }
+            }
+        }
+
+        std::cout << "Carga masiva exitosa. Peliculas: " << peliculasInsertadas 
+                  << " | Funciones: " << funcionesInsertadas << std::endl;
+
+    } catch (json::parse_error& e) {
+        std::cout << "Error al parsear el JSON: " << e.what() << std::endl;
+    }
+
+    archivo.close();
+}
 
 

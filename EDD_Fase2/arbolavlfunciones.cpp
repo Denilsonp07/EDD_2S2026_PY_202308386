@@ -2,6 +2,7 @@
 #include "arbolavlfunciones.h"
 #include <iostream>
 #include <cstdlib> // Para atoi
+#include <cstdio> // Para std::remove
 
 ArbolAVLFunciones::ArbolAVLFunciones() : raiz(nullptr) {}
 
@@ -150,7 +151,7 @@ Funcion* ArbolAVLFunciones::buscar(const std::string& codigo) {
     NodoAVL* actual = raiz;
     int codBuscado = extraerNumero(codigo);
 
-    // La busqueda se realiza utilizando el codigo_funcion como clave[cite: 1]
+    // La busqueda se realiza utilizando el codigo_funcion como clave
     while (actual != nullptr) {
         int codActual = extraerNumero(actual->funcion.getCodigoFuncion());
         
@@ -162,5 +163,113 @@ Funcion* ArbolAVLFunciones::buscar(const std::string& codigo) {
             actual = actual->der;
         }
     }
-    return nullptr; // Si el catalogo crece mucho, la busqueda sigue siendo optima gracias al AVL[cite: 1]
+    return nullptr; // Si el catalogo crece mucho, la busqueda sigue siendo optima gracias al AVL
+}
+
+NodoAVL* ArbolAVLFunciones::obtenerNodoMinimo(NodoAVL* nodo) {
+    NodoAVL* actual = nodo;
+    // Viajamos lo más a la izquierda posible
+    while (actual->izq != nullptr) {
+        actual = actual->izq;
+    }
+    return actual;
+}
+
+bool ArbolAVLFunciones::eliminarPorCodigo(const std::string& codigo) {
+    bool eliminado = false;
+    
+    // 1. Buscamos la función antes de borrarla para obtener el nombre de su archivo JSON
+    Funcion* f = buscar(codigo);
+    std::string archivoAEliminar = "";
+    
+    if (f != nullptr) {
+        archivoAEliminar = f->getArchivoAsientos();
+    }
+
+    // 2. Ejecutamos la eliminación en el árbol AVL
+    raiz = eliminarNodo(raiz, extraerNumero(codigo), eliminado);
+
+    // 3. Si se eliminó del árbol, borramos el archivo físico
+    if (eliminado && !archivoAEliminar.empty()) {
+        std::remove(archivoAEliminar.c_str());
+    }
+
+    return eliminado;
+}
+
+NodoAVL* ArbolAVLFunciones::eliminarNodo(NodoAVL* nodo, int codigoNumerico, bool& eliminado) {
+    // --- FASE 1: ELIMINACIÓN ESTÁNDAR (Como en el BST) ---
+    if (nodo == nullptr) {
+        return nodo;
+    }
+
+    int codigoActual = extraerNumero(nodo->funcion.getCodigoFuncion());
+
+    if (codigoNumerico < codigoActual) {
+        nodo->izq = eliminarNodo(nodo->izq, codigoNumerico, eliminado);
+    } else if (codigoNumerico > codigoActual) {
+        nodo->der = eliminarNodo(nodo->der, codigoNumerico, eliminado);
+    } else {
+        // Encontramos el nodo a eliminar
+        eliminado = true;
+
+        // Caso 1 o 2: Nodo con un solo hijo o sin hijos
+        if (nodo->izq == nullptr || nodo->der == nullptr) {
+            NodoAVL* temp = nodo->izq ? nodo->izq : nodo->der;
+
+            if (temp == nullptr) { // Sin hijos
+                temp = nodo;
+                nodo = nullptr;
+            } else { // Un hijo
+                *nodo = *temp; // Copiamos el contenido del hijo
+            }
+            delete temp;
+        } else {
+            // Caso 3: Nodo con dos hijos
+            // Buscamos el sucesor inorden (el menor del subárbol derecho)
+            NodoAVL* temp = obtenerNodoMinimo(nodo->der);
+
+            // Copiamos los datos del sucesor al nodo actual
+            nodo->funcion = temp->funcion;
+
+            // Eliminamos al sucesor original en el subárbol derecho
+            bool elimAux = false;
+            nodo->der = eliminarNodo(nodo->der, extraerNumero(temp->funcion.getCodigoFuncion()), elimAux);
+        }
+    }
+
+    // Si el árbol tenía un solo nodo, retornamos
+    if (nodo == nullptr) return nodo;
+
+    // --- FASE 2: ACTUALIZACIÓN DE ALTURA ---
+    int altIzq = obtenerAltura(nodo->izq);
+    int altDer = obtenerAltura(nodo->der);
+    nodo->altura = 1 + ((altIzq > altDer) ? altIzq : altDer);
+
+    // --- FASE 3: OBTENER EQUILIBRIO Y BALANCEAR ---
+    int balance = obtenerEquilibrio(nodo);
+
+    // Caso Izquierda-Izquierda
+    if (balance > 1 && obtenerEquilibrio(nodo->izq) >= 0) {
+        return rotacionDerecha(nodo);
+    }
+
+    // Caso Izquierda-Derecha
+    if (balance > 1 && obtenerEquilibrio(nodo->izq) < 0) {
+        nodo->izq = rotacionIzquierda(nodo->izq);
+        return rotacionDerecha(nodo);
+    }
+
+    // Caso Derecha-Derecha
+    if (balance < -1 && obtenerEquilibrio(nodo->der) <= 0) {
+        return rotacionIzquierda(nodo);
+    }
+
+    // Caso Derecha-Izquierda
+    if (balance < -1 && obtenerEquilibrio(nodo->der) > 0) {
+        nodo->der = rotacionDerecha(nodo->der);
+        return rotacionIzquierda(nodo);
+    }
+
+    return nodo;
 }

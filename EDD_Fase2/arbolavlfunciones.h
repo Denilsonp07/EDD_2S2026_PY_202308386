@@ -2,6 +2,9 @@
 #define ARBOLAVLFUNCIONES_H
 
 #include "funcion.h"
+#include "arbolavlfunciones.h"
+
+using namespace std;
 
 class NodoAVL {
 public:
@@ -14,13 +17,18 @@ public:
 };
 
 class ArbolAVLFunciones {
+
 private:
     NodoAVL* raiz;
 
-    // Métodos matemáticos para el balanceo
+    
+
+    // Metodos matematicos para el balanceo
     int obtenerAltura(NodoAVL* nodo);
     int obtenerEquilibrio(NodoAVL* nodo);
-    int extraerNumero(const std::string& codigo);
+    int extraerNumero(const string& codigo);
+
+    NodoAVL* obtenerNodoMinimo(NodoAVL* nodo);
 
     // Rotaciones
     NodoAVL* rotacionDerecha(NodoAVL* y);
@@ -36,9 +44,12 @@ public:
     ~ArbolAVLFunciones();
 
     void insertar(const Funcion& funcion);
-    bool eliminarPorCodigo(const std::string& codigo);
-    Funcion* buscar(const std::string& codigo);
+    bool eliminarPorCodigo(const string& codigo);
+    Funcion* buscar(const string& codigo);
+
+
     
-    // despueslos recorridos y Graphviz aqui
+    
+    // despueslos recorridos Graphviz 
 };
 #endif
