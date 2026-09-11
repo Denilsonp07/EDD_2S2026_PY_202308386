@@ -6,7 +6,7 @@ class NodoB {
 public:
     Cliente* clientes[3]; // Max 3 claves por nodo para orden 4
     NodoB* hijos[4];      // Max 4 punteros a hijos
-    int numClaves;        // Cuántos clientes hay actualmente en este nodo
+    int numClaves;        // Cuantos clientes hay actualmente en este nodo
     bool esHoja;          // Verdadero si no tiene hijos
 
     NodoB(bool hoja) {
