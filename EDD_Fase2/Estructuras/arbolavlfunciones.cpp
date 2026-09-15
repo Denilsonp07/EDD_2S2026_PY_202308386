@@ -4,6 +4,8 @@
 #include <cstdlib> // Para atoi
 #include <cstdio> // Para std::remove
 
+#include <fstream>
+
 ArbolAVLFunciones::ArbolAVLFunciones() : raiz(nullptr) {}
 
 ArbolAVLFunciones::~ArbolAVLFunciones() {
@@ -18,7 +20,7 @@ void ArbolAVLFunciones::eliminarNodos(NodoAVL* nodo) {
     }
 }
 
-int ArbolAVLFunciones::extraerNumero(const std::string& codigo) {
+int ArbolAVLFunciones::extraerNumero(const string& codigo) {
     std::string digitos = "";
     for (char c : codigo) {
         if (isdigit(c)) {
@@ -147,7 +149,7 @@ NodoAVL* ArbolAVLFunciones::insertarNodo(NodoAVL* nodo, const Funcion& funcion) 
 
 // === BÚSQUEDA ===
 
-Funcion* ArbolAVLFunciones::buscar(const std::string& codigo) {
+Funcion* ArbolAVLFunciones::buscar(const string& codigo) {
     NodoAVL* actual = raiz;
     int codBuscado = extraerNumero(codigo);
 
@@ -175,7 +177,7 @@ NodoAVL* ArbolAVLFunciones::obtenerNodoMinimo(NodoAVL* nodo) {
     return actual;
 }
 
-bool ArbolAVLFunciones::eliminarPorCodigo(const std::string& codigo) {
+bool ArbolAVLFunciones::eliminarPorCodigo(const string& codigo) {
     bool eliminado = false;
     
     // 1. Buscamos la función antes de borrarla para obtener el nombre de su archivo JSON
@@ -241,6 +243,8 @@ NodoAVL* ArbolAVLFunciones::eliminarNodo(NodoAVL* nodo, int codigoNumerico, bool
     // Si el árbol tenía un solo nodo, retornamos
     if (nodo == nullptr) return nodo;
 
+    
+
     // --- FASE 2: ACTUALIZACIÓN DE ALTURA ---
     int altIzq = obtenerAltura(nodo->izq);
     int altDer = obtenerAltura(nodo->der);
@@ -272,4 +276,46 @@ NodoAVL* ArbolAVLFunciones::eliminarNodo(NodoAVL* nodo, int codigoNumerico, bool
     }
 
     return nodo;
+}
+
+
+
+
+
+// --------------------------------- REPORTEE DEL ARBOL AVL ---------------------------------
+
+
+
+void ArbolAVLFunciones::generarDotAux(NodoAVL* nodo, std::ofstream& archivo) {
+    if (nodo == nullptr) return;
+
+    // Etiqueta básica con los datos requeridos
+    std::string label = nodo->funcion.getCodigoFuncion() + "\\n" +
+                        "Peli: " + nodo->funcion.getCodigoPelicula() + "\\n" +
+                        "Horario: " + nodo->funcion.getHorario() + "\\n" +
+                        "Sala: " + nodo->funcion.getSala();
+
+    // Nodos circulares, color verde (Programada)
+    archivo << "    \"" << nodo->funcion.getCodigoFuncion() 
+            << "\" [label=\"" << label << "\", shape=circle, style=filled, fillcolor=forestgreen, fontcolor=white];\n";
+
+    if (nodo->izq != nullptr) {
+        archivo << "    \"" << nodo->funcion.getCodigoFuncion() << "\" -> \"" 
+                << nodo->izq->funcion.getCodigoFuncion() << "\";\n";
+        generarDotAux(nodo->izq, archivo);
+    }
+    if (nodo->der != nullptr) {
+        archivo << "    \"" << nodo->funcion.getCodigoFuncion() << "\" -> \"" 
+                << nodo->der->funcion.getCodigoFuncion() << "\";\n";
+        generarDotAux(nodo->der, archivo);
+    }
+}
+
+void ArbolAVLFunciones::generarReporte() {
+    std::ofstream archivo("reporte_avl.dot");
+    archivo << "digraph AVL {\n";
+    generarDotAux(raiz, archivo);
+    archivo << "}\n";
+    archivo.close();
+    system("dot -Tpng reporte_avl.dot -o reporte_avl.png");
 }

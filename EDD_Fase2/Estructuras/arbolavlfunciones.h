@@ -47,6 +47,9 @@ public:
     bool eliminarPorCodigo(const string& codigo);
     Funcion* buscar(const string& codigo);
 
+    void generarDotAux(NodoAVL* nodo, std::ofstream& archivo);
+    void generarReporte();
+
 
     
     

@@ -2,6 +2,8 @@
 
 #include <cstdio>
 
+#include "json.hpp"
+
 namespace {
 std::string escaparGraphvizAsientos(const std::string& texto)
 {
@@ -373,4 +375,111 @@ bool MatrizDispersa::generarReporteAsientos(
     const std::string comando = "C:/Progra~1/Graphviz/bin/dot.exe -Tpng \""
         + rutaDot + "\" -o \"" + rutaPng + "\"";
     return system(comando.c_str()) == 0;
+}
+
+
+
+
+
+
+using json = nlohmann::json;
+
+// -------------------------------- GESTIÓN DE MEMORIA ---------------------------------------
+
+MatrizDispersa::~MatrizDispersa() {
+    limpiar();
+}
+
+void MatrizDispersa::limpiar() {
+    // 1. Eliminar todos los nodos de asientos recorriendo las filas
+    NodoCabecera* cabFila = cabecerasFila;
+    while (cabFila != nullptr) {
+        NodoAsiento* asiento = cabFila->getPrimero();
+        while (asiento != nullptr) {
+            NodoAsiento* tempAsiento = asiento;
+            asiento = asiento->getDerecha();
+            delete tempAsiento;
+        }
+        // Eliminar la cabecera de la fila
+        NodoCabecera* tempCabFila = cabFila;
+        cabFila = cabFila->getSiguiente();
+        delete tempCabFila;
+    }
+    cabecerasFila = nullptr;
+
+    // 2. Eliminar las cabeceras de columna (los asientos ya fueron eliminados)
+    NodoCabecera* cabCol = cabecerasColumna;
+    while (cabCol != nullptr) {
+        NodoCabecera* tempCabCol = cabCol;
+        cabCol = cabCol->getSiguiente();
+        delete tempCabCol;
+    }
+    cabecerasColumna = nullptr;
+}
+
+
+
+
+// -------------------------------- PERSISTENCIA de JSON --------------------------------
+
+
+
+void MatrizDispersa::cargarDesdeJSON(const std::string& rutaArchivo, int filas, int columnas) {
+    limpiar(); // Vaciamos la matriz si tenía datos de otra función
+    
+    totalFilas = filas;
+    totalColumnas = columnas;
+
+    std::ifstream archivo(rutaArchivo);
+    if (!archivo.is_open()) {
+        return; // El archivo puede no existir aún si la función es nueva
+    }
+
+    try {
+        json j;
+        archivo >> j;
+
+        // Leer únicamente las celdas ocupadas y reconstruir la matriz en memoria
+        for (const auto& asientoJson : j["asientos_ocupados"]) {
+            int f = asientoJson["fila"];
+            int c = asientoJson["columna"];
+            std::string codReserva = asientoJson["codigo_reserva"];
+            
+            // Usamos tu método reservar (que internamente enlaza los nodos)
+            reservar(f, c, codReserva); 
+        }
+    } catch (json::parse_error& e) {
+        std::cout << "Error al leer JSON de asientos: " << e.what() << std::endl;
+    }
+    archivo.close();
+}
+
+void MatrizDispersa::guardarAJSON(const std::string& rutaArchivo, const std::string& codigoFuncion) {
+    json j;
+    j["codigo_funcion"] = codigoFuncion;
+    j["asientos_ocupados"] = json::array(); // Inicializamos el arreglo vacío
+
+    // Recorremos la matriz para guardar solo los nodos existentes
+    NodoCabecera* cab = cabecerasFila;
+    while (cab != nullptr) {
+        NodoAsiento* asiento = cab->getPrimero();
+        while (asiento != nullptr) {
+            json nodoJson;
+            nodoJson["fila"] = asiento->getFila();
+            nodoJson["columna"] = asiento->getColumna();
+            // Tu método original getCliente() ahora devuelve el codigo_reserva
+            nodoJson["codigo_reserva"] = asiento->getCliente(); 
+            
+            j["asientos_ocupados"].push_back(nodoJson);
+            asiento = asiento->getDerecha();
+        }
+        cab = cab->getSiguiente();
+    }
+
+    // Escribir al archivo
+    std::ofstream archivo(rutaArchivo);
+    if (archivo.is_open()) {
+        archivo << j.dump(4); // Indentación de 4 espacios para que sea legible
+        archivo.close();
+    }
 }

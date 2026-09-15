@@ -4,18 +4,20 @@
 #include <fstream>
 #include <iostream>
 
+using namespace std;
+
 // NodoAsiento representa un asiento ocupado
 // Si un asiento no tiene nodo, se asume que esta libre
 class NodoAsiento {
 private:
     int fila;
     int columna;
-    std::string cliente;
+    string cliente;
     NodoAsiento* derecha; // siguiente asiento ocupado en la misma fila
     NodoAsiento* abajo;   // siguiente asiento ocupado en la misma columna
 
 public:
-    NodoAsiento(int fila, int columna, const std::string& cliente)
+    NodoAsiento(int fila, int columna, const string& cliente)
         : fila(fila), columna(columna), cliente(cliente), derecha(nullptr), abajo(nullptr) {}
 
     int getFila() const { return fila; }
@@ -61,19 +63,25 @@ private:
 
 public:
     MatrizDispersa(int filas, int columnas);
+    ~MatrizDispersa();
 
-    bool reservar(int fila, int columna, const std::string& cliente);
+    void limpiar();
+
+    void cargarDesdeJSON(const string& rutaArchivo, int filas, int columnas);
+    void guardarAJSON(const string& rutaArchivo, const string& codigoFuncion);
+
+    bool reservar(int fila, int columna, const string& codigo_reserva); 
     bool cancelar(int fila, int columna);
     bool estaOcupado(int fila, int columna);
-    std::string getClienteAsiento(int fila, int columna); // "" si libre
+    string getClienteAsiento(int fila, int columna); // "" si libre
 
     int contarOcupados();
     int contarLibres();
 
-    void generarDot(const std::string& tituloFuncion);
-    bool generarReporteAsientos(const std::string& tituloFuncion,
-                                const std::string& rutaDot,
-                                const std::string& rutaPng);
+    void generarDot(const string& tituloFuncion);
+    bool generarReporteAsientos(const string& tituloFuncion,
+                                const string& rutaDot,
+                                const string& rutaPng);
 };
 
 #endif

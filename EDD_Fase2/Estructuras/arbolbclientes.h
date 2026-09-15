@@ -1,6 +1,7 @@
 #ifndef ARBOLBCLIENTES_H
 #define ARBOLBCLIENTES_H
 #include "cliente.h"
+#include "tablahashreservas.h"
 
 class NodoB {
 public:
@@ -32,11 +33,34 @@ private:
     // Metodo recursivo para listar (Inorden adaptado para multiples claves)
     void mostrarInordenRecursivo(NodoB* nodo);
 
+    
+    //LOGICA DE ELIMINACION
+
+    void eliminarRecursivo(NodoB* nodo, int idNumerico);
+    int encontrarClave(NodoB* nodo, int idNumerico);
+    void removerDeHoja(NodoB* nodo, int indice);
+    void removerDeNoHoja(NodoB* nodo, int indice);
+    void llenar(NodoB* nodo, int indice);
+    void pedirPrestadoAnterior(NodoB* nodo, int indice);
+    void pedirPrestadoSiguiente(NodoB* nodo, int indice);
+    void fusionar(NodoB* nodo, int indice);
+
+
+
 public:
     ArbolBClientes();
     
     void insertar(const Cliente& cliente);
     Cliente* buscar(const std::string& id);
     void mostrarClientes(); // Lista todos los clientes ordenados por Id
+
+    //LOGICA DE ELIMINACION
+    bool eliminarCliente(const string& id, TablaHash& tablaReservas);
+
+    void cargarJSON(const string& ruta, TablaHash& tablaReservas);
+
+    void generarReporte();
+    void generarDotAux(NodoB* nodo, std::ofstream& archivo, int& contador);
+
 };
 #endif

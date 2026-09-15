@@ -286,3 +286,51 @@ void vistaCliente::on_btnSalir_clicked()
     }
     close();
 }
+
+
+
+//------------------------  PROMOCIONES EN INTERFAZZZZ ----------------------------
+
+// Función que evalúa si la promoción es válida hoy
+bool esPromocionVigente(const std::string& vigenciaStr) {
+    QString vigencia = QString::fromStdString(vigenciaStr);
+    
+    // Partimos el string usando el separador " / "
+    QStringList fechas = vigencia.split(" / ");
+    
+    if (fechas.size() == 2) {
+        // Convertimos los textos a objetos QDate
+        QDate fechaInicio = QDate::fromString(fechas[0].trimmed(), "yyyy-MM-dd");
+        QDate fechaFin = QDate::fromString(fechas[1].trimmed(), "yyyy-MM-dd");
+        
+        // Obtenemos la fecha actual del sistema
+        QDate hoy = QDate::currentDate(); 
+        
+        // Verificamos que las fechas sean válidas y que hoy esté dentro del rango
+        if (fechaInicio.isValid() && fechaFin.isValid()) {
+            return (hoy >= fechaInicio && hoy <= fechaFin);
+        }
+    }
+    return false; // Si el formato falla o está vencida, retorna falso
+}
+
+void cargarPromocionesEnInterfaz(ListaCircularPromociones& listaPromos, QComboBox* comboBox) {
+    comboBox->clear();
+    
+    if (listaPromos.estaVacia()) return;
+
+    NodoPromocion* actual = listaPromos.getCabeza();
+    
+    // Recorrido estricto con punteros para la lista circular
+    do {
+        // Aplicamos el filtro de fecha
+        if (esPromocionVigente(actual->promocion.vigencia)) {
+            QString textoMostrar = QString::fromStdString(actual->promocion.nombre + " - Aplica: " + actual->promocion.diasAplicables);
+            
+            // Guardamos el código de la promoción como "UserData" oculto en el item
+            // para poder buscarlo fácilmente cuando el cliente le haga clic
+            comboBox->addItem(textoMostrar, QString::fromStdString(actual->promocion.codigo));
+        }
+        actual = actual->siguiente;
+    } while (actual != listaPromos.getCabeza());
+}

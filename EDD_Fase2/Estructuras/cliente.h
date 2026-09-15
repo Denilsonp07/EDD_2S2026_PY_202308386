@@ -43,6 +43,7 @@ public:
     string getCorreo() const { return correo; }
     string getTelefono() const { return telefono; }
     string getPassword() const { return password; }
+    NodoReservaRef* getCabezaReservas() const {return cabezaReservas; }
 
     // Agregar referencia de reserva sin duplicar datos
     void agregarReserva(const string& codigo_reserva) {

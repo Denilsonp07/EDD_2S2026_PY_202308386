@@ -18,8 +18,8 @@ private:
 public:
     Funcion();
 
-    Funcion(std::string codF = "", std::string codP = "", std::string hor = "", 
-            std::string sal = "", int f = 0, int c = 0);
+    Funcion(string codF = "", string codP = "", string hor = "", 
+            string sal = "", int f = 0, int c = 0);
 
     // Getters
     string getCodigoFuncion() const;
