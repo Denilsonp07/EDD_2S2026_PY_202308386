@@ -7,6 +7,8 @@
 #include <QMessageBox>
 #include <QHeaderView>
 #include <QTableWidgetItem>
+#include <QInputDialog>
+#include <QLineEdit>
 
 static QDate convertirFechaPromocion(const QString& texto)
 {
@@ -41,9 +43,20 @@ static bool promocionVigenteHoy(const std::string& vigencia)
     return inicio.isValid() && fin.isValid() && inicio <= hoy && hoy <= fin;
 }
 
-vistaCliente::vistaCliente(QWidget *parent)
+static std::string claveFuncion(const FuncionCine* funcion)
+{
+    if (funcion == nullptr) {
+        return "";
+    }
+    return funcion->pelicula.toStdString() + "|" +
+           funcion->horario.toStdString() + "|" +
+           funcion->sala.toStdString();
+}
+
+vistaCliente::vistaCliente(Cliente* cliente, QWidget *parent)
     : QDialog(parent)
     , ui(new Ui::vistaCliente)
+    , clienteActual(cliente)
 {
     ui->setupUi(this);
     ui->tabla_asientos_cliente->setEditTriggers(QAbstractItemView::NoEditTriggers);
@@ -60,6 +73,15 @@ vistaCliente::vistaCliente(QWidget *parent)
         QStringList() << "Tipo" << "Descripcion" << "Valor");
     ui->tabla_beneficios_cliente->setEditTriggers(QAbstractItemView::NoEditTriggers);
     ui->tabla_beneficios_cliente->horizontalHeader()->setStretchLastSection(true);
+    ui->tabla_historial->setColumnCount(5);
+    ui->tabla_historial->setHorizontalHeaderLabels(
+        QStringList() << "Codigo Reserva" << "Funcion" << "Fila" << "Asiento" << "Estado");
+    ui->tabla_historial->setSelectionBehavior(QAbstractItemView::SelectRows);
+    ui->tabla_historial->setSelectionMode(QAbstractItemView::SingleSelection);
+    ui->tabla_historial->setEditTriggers(QAbstractItemView::NoEditTriggers);
+    ui->txt_correo->setReadOnly(true);
+    cargarPerfil();
+    cargarHistorial();
     cargarPeliculas();
     cargarPromocionesVigentes();
 }
@@ -211,9 +233,9 @@ void vistaCliente::on_btn_reservar_clicked()
         QMessageBox::warning(this, "Funcion requerida", "Selecciona una pelicula y un horario disponible.");
         return;
     }
-    const QString cliente = ui->txt_cliente->text().trimmed();
-    if (cliente.isEmpty()) {
-        QMessageBox::warning(this, "Cliente requerido", "Ingresa el nombre del cliente.");
+
+    if (clienteActual == nullptr) {
+        QMessageBox::warning(this, "Cliente requerido", "No se pudo identificar al cliente actual.");
         return;
     }
 
@@ -223,13 +245,33 @@ void vistaCliente::on_btn_reservar_clicked()
         QMessageBox::warning(this, "Asiento ocupado", "Ese asiento ya esta reservado. Selecciona otro.");
         return;
     }
-    if (!funcion->asientos->reservar(fila, columna, cliente.toStdString())) {
+
+    std::string codigoReserva = "R-001";
+    for (int numero = 1; numero < 100000; ++numero) {
+        const QString codigoGenerado = QString("R-%1").arg(numero, 3, 10, QChar('0'));
+        std::string posible = codigoGenerado.toStdString();
+        if (datosCine().tablaReservas.buscar(posible) == nullptr) {
+            codigoReserva = posible;
+            break;
+        }
+    }
+
+    const std::string codigoFuncion = claveFuncion(funcion);
+    const std::string fechaReserva = QDate::currentDate().toString("yyyy-MM-dd").toStdString();
+    const Reserva nuevaReserva(codigoReserva, codigoFuncion, fila, columna, fechaReserva);
+    datosCine().tablaReservas.insertar(nuevaReserva);
+    clienteActual->agregarReserva(codigoReserva);
+
+    if (!funcion->asientos->reservar(fila, columna, codigoReserva)) {
+        datosCine().tablaReservas.eliminar(codigoReserva);
+        clienteActual->eliminarReserva(codigoReserva);
         QMessageBox::warning(this, "Asiento invalido", "La fila o el numero de asiento estan fuera del rango de la sala.");
         return;
     }
-    
+
     mostrarAsientos(indiceFuncion);
-    QMessageBox::information(this, "Reserva realizada", "El asiento se reservo correctamente.");
+    cargarHistorial();
+    QMessageBox::information(this, "Reserva realizada", "La reserva se registro correctamente con codigo " + QString::fromStdString(codigoReserva));
 }
 
 void vistaCliente::on_btn_eliminar_clicked()
@@ -270,8 +312,86 @@ void vistaCliente::on_tabla_promociones_cliente_cellClicked(int row, int column)
 void vistaCliente::on_tabWidget_currentChanged(int index)
 {
     if (index == 2) {
-        cargarPromocionesVigentes();
+        cargarPerfil();
+        cargarHistorial();
     }
+}
+
+void vistaCliente::on_btn_guardar_perfil_clicked()
+{
+    if (clienteActual == nullptr) {
+        return;
+    }
+
+    const QString nombre = ui->txt_nombre->text().trimmed();
+    const QString telefono = ui->txt_telefono->text().trimmed();
+    const QString password = ui->txt_password->text();
+    if (nombre.isEmpty() || telefono.isEmpty() || password.isEmpty()) {
+        QMessageBox::warning(this, "Datos incompletos", "Completa nombre, telefono y contrasena.");
+        return;
+    }
+
+    clienteActual->setNombre(nombre.toStdString());
+    clienteActual->setTelefono(telefono.toStdString());
+    clienteActual->setPassword(password.toStdString());
+    QMessageBox::information(this, "Perfil actualizado", "Los datos del perfil se actualizaron correctamente.");
+}
+
+void vistaCliente::on_btn_cancelar_reserva_clicked()
+{
+    const int filaSeleccionada = ui->tabla_historial->currentRow();
+    if (filaSeleccionada < 0) {
+        QMessageBox::warning(this, "Seleccion requerida", "Selecciona una reserva para cancelar.");
+        return;
+    }
+
+    QTableWidgetItem* itemReserva = ui->tabla_historial->item(filaSeleccionada, 0);
+    QTableWidgetItem* itemFuncion = ui->tabla_historial->item(filaSeleccionada, 1);
+    if (itemReserva == nullptr || itemFuncion == nullptr || clienteActual == nullptr) {
+        return;
+    }
+
+    const std::string codigoReserva = itemReserva->text().toStdString();
+    const std::string codigoFuncion = itemFuncion->text().toStdString();
+    Reserva* reserva = datosCine().tablaReservas.buscar(codigoReserva);
+    if (reserva == nullptr) {
+        QMessageBox::warning(this, "Reserva no encontrada", "La reserva ya no existe en la Tabla Hash.");
+        cargarHistorial();
+        return;
+    }
+
+    const QMessageBox::StandardButton confirmar = QMessageBox::question(
+        this, "Cancelar reserva", "¿Deseas cancelar la reserva "
+        + QString::fromStdString(codigoReserva) + "?");
+    if (confirmar != QMessageBox::Yes) {
+        return;
+    }
+
+    FuncionCine* funcion = nullptr;
+    for (int indice = 0; indice < datosCine().totalFunciones; ++indice) {
+        FuncionCine* actual = datosCine().obtenerFuncion(indice);
+        if (actual == nullptr || actual->asientos == nullptr) {
+            continue;
+        }
+        if (claveFuncion(actual) == codigoFuncion) {
+            funcion = actual;
+            break;
+        }
+    }
+
+    if (funcion == nullptr || funcion->asientos == nullptr) {
+        QMessageBox::warning(this, "Funcion no encontrada", "No se encontro la funcion en el Arbol AVL.");
+        return;
+    }
+
+    const int filaReserva = reserva->fila;
+    const int columnaReserva = reserva->columna;
+    datosCine().tablaReservas.eliminar(codigoReserva);
+    clienteActual->eliminarReserva(codigoReserva);
+    funcion->asientos->cancelar(filaReserva, columnaReserva);
+
+    cargarHistorial();
+    QMessageBox::information(this, "Reserva cancelada", "La reserva se cancelo correctamente.");
 }
 
 vistaCliente::~vistaCliente()
@@ -285,6 +405,40 @@ void vistaCliente::on_btnSalir_clicked()
         parentWidget()->show();
     }
     close();
+}
+
+void vistaCliente::on_btnEditarPerfil_clicked()
+{
+    if (clienteActual == nullptr) {
+        return;
+    }
+
+    bool aceptado = false;
+    const QString nombre = QInputDialog::getText(
+        this, "Editar perfil", "Nombre:", QLineEdit::Normal,
+        QString::fromStdString(clienteActual->getNombre()), &aceptado);
+    if (!aceptado || nombre.trimmed().isEmpty()) {
+        return;
+    }
+
+    const QString telefono = QInputDialog::getText(
+        this, "Editar perfil", "Telefono:", QLineEdit::Normal,
+        QString::fromStdString(clienteActual->getTelefono()), &aceptado);
+    if (!aceptado || telefono.trimmed().isEmpty()) {
+        return;
+    }
+
+    const QString contrasena = QInputDialog::getText(
+        this, "Editar perfil", "Contrasena:", QLineEdit::Password,
+        QString::fromStdString(clienteActual->getPassword()), &aceptado);
+    if (!aceptado || contrasena.isEmpty()) {
+        return;
+    }
+
+    clienteActual->setNombre(nombre.trimmed().toStdString());
+    clienteActual->setTelefono(telefono.trimmed().toStdString());
+    clienteActual->setPassword(contrasena.toStdString());
+    QMessageBox::information(this, "Perfil actualizado", "Tus datos fueron actualizados correctamente.");
 }
 
 
@@ -333,4 +487,49 @@ void cargarPromocionesEnInterfaz(ListaCircularPromociones& listaPromos, QComboBo
         }
         actual = actual->siguiente;
     } while (actual != listaPromos.getCabeza());
+}
+
+void vistaCliente::cargarPerfil()
+{
+    if (clienteActual == nullptr) {
+        return;
+    }
+    ui->txt_nombre->setText(QString::fromStdString(clienteActual->getNombre()));
+    ui->txt_correo->setText(QString::fromStdString(clienteActual->getCorreo()));
+    ui->txt_telefono->setText(QString::fromStdString(clienteActual->getTelefono()));
+    ui->txt_password->setText(QString::fromStdString(clienteActual->getPassword()));
+}
+
+void vistaCliente::cargarHistorial()
+{
+    ui->tabla_historial->setRowCount(0);
+    if (clienteActual == nullptr) {
+        return;
+    }
+
+    const QDate hoy = QDate::currentDate();
+    for (NodoReservaRef* referencia = clienteActual->getCabezaReservas();
+         referencia != nullptr; referencia = referencia->siguiente) {
+        Reserva* reserva = datosCine().tablaReservas.buscar(referencia->codigo_reserva);
+        if (reserva == nullptr) {
+            continue;
+        }
+
+        const int fila = ui->tabla_historial->rowCount();
+        ui->tabla_historial->insertRow(fila);
+        ui->tabla_historial->setItem(fila, 0, new QTableWidgetItem(
+            QString::fromStdString(reserva->codigo_reserva)));
+        ui->tabla_historial->setItem(fila, 1, new QTableWidgetItem(
+            QString::fromStdString(reserva->codigo_funcion)));
+        ui->tabla_historial->setItem(fila, 2, new QTableWidgetItem(
+            QString::number(reserva->fila)));
+        ui->tabla_historial->setItem(fila, 3, new QTableWidgetItem(
+            QString::number(reserva->columna)));
+
+        const QDate fechaReserva = convertirFechaPromocion(
+            QString::fromStdString(reserva->fecha_reserva));
+        ui->tabla_historial->setItem(fila, 4, new QTableWidgetItem(
+            fechaReserva.isValid() && fechaReserva >= hoy ? "Vigente" : "Vencida"));
+    }
+    ui->tabla_historial->resizeColumnsToContents();
 }

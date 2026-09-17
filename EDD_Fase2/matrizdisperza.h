@@ -78,7 +78,6 @@ public:
     int contarOcupados();
     int contarLibres();
 
-    void generarDot(const string& tituloFuncion);
     bool generarReporteAsientos(const string& tituloFuncion,
                                 const string& rutaDot,
                                 const string& rutaPng);

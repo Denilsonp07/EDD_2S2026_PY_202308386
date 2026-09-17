@@ -4,6 +4,7 @@
 #include <QString>
 
 #include "arbolbinariopeliculas.h"
+#include "arbolbclientes.h"
 #include "listapromociones.h"
 #include "matrizdisperza.h"
 
@@ -30,6 +31,9 @@ struct FuncionCine {
 
 struct DatosCine {
     ArbolBinarioDeBusquedaPeliculas arbolPeliculas;
+    ArbolAVLFunciones arbolFunciones;
+    ArbolBClientes arbolClientes;
+    TablaHash tablaReservas;
     ListaCircularPromociones promociones;
     FuncionCine* primeraFuncion;
     int totalFunciones;

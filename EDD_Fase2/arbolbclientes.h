@@ -2,6 +2,7 @@
 #define ARBOLBCLIENTES_H
 #include "cliente.h"
 #include "tablahashreservas.h"
+#include <vector>
 
 class NodoB {
 public:
@@ -25,6 +26,9 @@ public:
 class ArbolBClientes {
 private:
     NodoB* raiz;
+
+    Cliente* buscarCorreoRecursivo(NodoB* nodo, const std::string& correo);
+    void recolectarInorden(NodoB* nodo, std::vector<Cliente*>& clientes);
 
     // Metodos core del arbol B
     void dividirHijo(NodoB* padre, int i, NodoB* hijoLleno);
@@ -52,6 +56,10 @@ public:
     
     void insertar(const Cliente& cliente);
     Cliente* buscar(const std::string& id);
+    Cliente* buscarPorCorreo(const std::string& correo);
+    std::vector<Cliente*> obtenerClientesInorden();
+    std::vector<Cliente*> obtenerClientesPreorden();
+    std::vector<Cliente*> obtenerClientesPostorden();
     void mostrarClientes(); // Lista todos los clientes ordenados por Id
 
     //LOGICA DE ELIMINACION

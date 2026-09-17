@@ -13,7 +13,7 @@ class vistaCliente : public QDialog
     Q_OBJECT
 
 public:
-    explicit vistaCliente(QWidget *parent = nullptr);
+    explicit vistaCliente(Cliente* cliente, QWidget *parent = nullptr);
     ~vistaCliente();
 
 private:
@@ -23,8 +23,11 @@ private:
     void mostrarAsientos(int indiceFuncion);
     void cargarPromocionesVigentes();
     void mostrarBeneficiosPromocion(const QString& codigo);
+    void cargarPerfil();
+    void cargarHistorial();
 
     Ui::vistaCliente *ui;
+    Cliente* clienteActual;
 
 private slots:
     void on_btnSalir_clicked();
@@ -34,6 +37,9 @@ private slots:
     void on_btn_eliminar_clicked();
     void on_tabla_promociones_cliente_cellClicked(int row, int column);
     void on_tabWidget_currentChanged(int index);
+    void on_btnEditarPerfil_clicked();
+    void on_btn_guardar_perfil_clicked();
+    void on_btn_cancelar_reserva_clicked();
 };
 
 #endif // VISTACLIENTE_H

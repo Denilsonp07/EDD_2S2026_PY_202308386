@@ -45,6 +45,11 @@ public:
     string getPassword() const { return password; }
     NodoReservaRef* getCabezaReservas() const {return cabezaReservas; }
 
+    void setNombre(const string& valor) { nombre = valor; }
+    void setCorreo(const string& valor) { correo = valor; }
+    void setTelefono(const string& valor) { telefono = valor; }
+    void setPassword(const string& valor) { password = valor; }
+
     // Agregar referencia de reserva sin duplicar datos
     void agregarReserva(const string& codigo_reserva) {
         NodoReservaRef* nuevo = new NodoReservaRef(codigo_reserva);
@@ -57,6 +62,25 @@ public:
             }
             actual->siguiente = nuevo;
         }
+    }
+
+    bool eliminarReserva(const string& codigo_reserva) {
+        NodoReservaRef* anterior = nullptr;
+        NodoReservaRef* actual = cabezaReservas;
+        while (actual != nullptr) {
+            if (actual->codigo_reserva == codigo_reserva) {
+                if (anterior == nullptr) {
+                    cabezaReservas = actual->siguiente;
+                } else {
+                    anterior->siguiente = actual->siguiente;
+                }
+                delete actual;
+                return true;
+            }
+            anterior = actual;
+            actual = actual->siguiente;
+        }
+        return false;
     }
 };
 #endif

@@ -17,6 +17,7 @@
 #include <QDate>
 #include <QCoreApplication>
 #include <QPixmap>
+#include <QDir>
 
 vistaAdmin::vistaAdmin(QWidget *parent)
     : QDialog(parent)
@@ -24,13 +25,21 @@ vistaAdmin::vistaAdmin(QWidget *parent)
 {
     ui->setupUi(this);
     configurarTablaCargaMasiva();
+    configurarTablaClientesCargaMasiva();
     configurarTablaGestionar();
+    configurarTablaGestionarClientes();
     configurarTablaCartelera();
+
+    ui->comboOrden->addItems(QStringList() << "Inorden" << "Preorden" << "Postorden");
+    ui->comboCliente->addItems(QStringList() << "Inorden" << "Preorden" << "Postorden");
 
     ui->tabla_asientos->setEditTriggers(QAbstractItemView::NoEditTriggers);
     ui->tabla_asientos->setSelectionMode(QAbstractItemView::NoSelection);
+    ui->lblReporte1->hide();
+    ui->lblReporte2->hide();
     ui->lblReporte3->hide();
     ui->lblReporte4->hide();
+    ui->lblReporte5->hide();
 
     ui->tabla_promociones->setColumnCount(4);
     ui->tabla_promociones->setHorizontalHeaderLabels(
@@ -83,6 +92,19 @@ void vistaAdmin::configurarTablaCargaMasiva()
     ui->tbCargaMasiva->horizontalHeader()->setSectionResizeMode(QHeaderView::ResizeToContents);
 }
 
+void vistaAdmin::configurarTablaClientesCargaMasiva()
+{
+    ui->tbCargaMasiva2->setColumnCount(5);
+    ui->tbCargaMasiva2->setHorizontalHeaderLabels(
+        QStringList() << "ID" << "Nombre" << "Correo" << "Telefono" << "Contrasena");
+    ui->tbCargaMasiva2->setRowCount(0);
+    ui->tbCargaMasiva2->setEditTriggers(QAbstractItemView::NoEditTriggers);
+    ui->tbCargaMasiva2->setSelectionBehavior(QAbstractItemView::SelectRows);
+    ui->tbCargaMasiva2->setSelectionMode(QAbstractItemView::SingleSelection);
+    ui->tbCargaMasiva2->horizontalHeader()->setStretchLastSection(true);
+    ui->tbCargaMasiva2->horizontalHeader()->setSectionResizeMode(QHeaderView::ResizeToContents);
+}
+
 void vistaAdmin::configurarTablaGestionar()
 {
     ui->tbGestionar->setColumnCount(8);
@@ -96,6 +118,19 @@ void vistaAdmin::configurarTablaGestionar()
     ui->tbGestionar->setSelectionMode(QAbstractItemView::SingleSelection);
     ui->tbGestionar->horizontalHeader()->setStretchLastSection(true);
     ui->tbGestionar->horizontalHeader()->setSectionResizeMode(QHeaderView::ResizeToContents);
+}
+
+void vistaAdmin::configurarTablaGestionarClientes()
+{
+    ui->tbGestionarCli->setColumnCount(5);
+    ui->tbGestionarCli->setHorizontalHeaderLabels(
+        QStringList() << "ID" << "Nombre" << "Correo" << "Telefono" << "Contrasena");
+    ui->tbGestionarCli->setRowCount(0);
+    ui->tbGestionarCli->setEditTriggers(QAbstractItemView::NoEditTriggers);
+    ui->tbGestionarCli->setSelectionBehavior(QAbstractItemView::SelectRows);
+    ui->tbGestionarCli->setSelectionMode(QAbstractItemView::SingleSelection);
+    ui->tbGestionarCli->horizontalHeader()->setStretchLastSection(true);
+    ui->tbGestionarCli->horizontalHeader()->setSectionResizeMode(QHeaderView::ResizeToContents);
 }
 
 void vistaAdmin::configurarTablaCartelera()
@@ -136,9 +171,38 @@ void vistaAdmin::llenarTablaCargaMasiva()
     ui->tbCargaMasiva->resizeRowsToContents();
 }
 
+void vistaAdmin::llenarTablaClientesCargaMasiva()
+{
+    const std::vector<Cliente*> clientes = datosCine().arbolClientes.obtenerClientesInorden();
+
+    ui->tbCargaMasiva2->setRowCount(0);
+    ui->tbCargaMasiva2->setRowCount(static_cast<int>(clientes.size()));
+
+    for (int fila = 0; fila < static_cast<int>(clientes.size()); ++fila) {
+        const Cliente* cliente = clientes[static_cast<size_t>(fila)];
+        ui->tbCargaMasiva2->setItem(fila, 0,
+            new QTableWidgetItem(QString::fromStdString(cliente->getId())));
+        ui->tbCargaMasiva2->setItem(fila, 1,
+            new QTableWidgetItem(QString::fromStdString(cliente->getNombre())));
+        ui->tbCargaMasiva2->setItem(fila, 2,
+            new QTableWidgetItem(QString::fromStdString(cliente->getCorreo())));
+        ui->tbCargaMasiva2->setItem(fila, 3,
+            new QTableWidgetItem(QString::fromStdString(cliente->getTelefono())));
+        ui->tbCargaMasiva2->setItem(fila, 4,
+            new QTableWidgetItem(QString::fromStdString(cliente->getPassword())));
+    }
+
+    ui->tbCargaMasiva2->resizeRowsToContents();
+}
+
 void vistaAdmin::llenarTablaGestionar()
 {
-    const ListaPeliculas peliculas = datosCine().arbolPeliculas.obtenerPeliculasInorden();
+    const int orden = ui->comboOrden->currentIndex();
+    const ListaPeliculas peliculas = orden == 1
+        ? datosCine().arbolPeliculas.obtenerPeliculasPreorden()
+        : (orden == 2
+            ? datosCine().arbolPeliculas.obtenerPeliculasPostorden()
+            : datosCine().arbolPeliculas.obtenerPeliculasInorden());
 
     ui->tbGestionar->setRowCount(0);
     ui->tbGestionar->setRowCount(peliculas.size());
@@ -157,6 +221,31 @@ void vistaAdmin::llenarTablaGestionar()
     }
 
     ui->tbGestionar->resizeRowsToContents();
+}
+
+void vistaAdmin::llenarTablaGestionarClientes()
+{
+    const int orden = ui->comboCliente->currentIndex();
+    std::vector<Cliente*> clientes;
+    if (orden == 1) {
+        clientes = datosCine().arbolClientes.obtenerClientesPreorden();
+    } else if (orden == 2) {
+        clientes = datosCine().arbolClientes.obtenerClientesPostorden();
+    } else {
+        clientes = datosCine().arbolClientes.obtenerClientesInorden();
+    }
+
+    ui->tbGestionarCli->setRowCount(static_cast<int>(clientes.size()));
+
+    for (int fila = 0; fila < static_cast<int>(clientes.size()); ++fila) {
+        const Cliente* cliente = clientes[static_cast<size_t>(fila)];
+        ui->tbGestionarCli->setItem(fila, 0, new QTableWidgetItem(QString::fromStdString(cliente->getId())));
+        ui->tbGestionarCli->setItem(fila, 1, new QTableWidgetItem(QString::fromStdString(cliente->getNombre())));
+        ui->tbGestionarCli->setItem(fila, 2, new QTableWidgetItem(QString::fromStdString(cliente->getCorreo())));
+        ui->tbGestionarCli->setItem(fila, 3, new QTableWidgetItem(QString::fromStdString(cliente->getTelefono())));
+        ui->tbGestionarCli->setItem(fila, 4, new QTableWidgetItem(QString::fromStdString(cliente->getPassword())));
+    }
+    ui->tbGestionarCli->resizeRowsToContents();
 }
 
 void vistaAdmin::llenarTablaCartelera()
@@ -211,24 +300,49 @@ void vistaAdmin::on_btnCargarPeli_clicked()
 {
     const QString rutaCsv = QFileDialog::getOpenFileName(
         this,
-        "Seleccionar archivo CSV de peliculas",
+        "Seleccionar archivo JSON de peliculas",
         QString(),
-        "Archivos CSV (*.csv);;Todos los archivos (*.*)");
+        "Archivos JSON (*.json);;Todos los archivos (*.*)");
 
     if (rutaCsv.isEmpty()) {
         return;
     }
 
     datosCine().arbolPeliculas.limpiar();
-    datosCine().arbolPeliculas.cargarCSV(rutaCsv.toStdString());
+    datosCine().arbolPeliculas.cargarJSON(
+        rutaCsv.toStdString(), datosCine().arbolFunciones);
     llenarTablaCargaMasiva();
     llenarTablaGestionar();
+    llenarTablaGestionarClientes();
     llenarTablaCartelera();
 
     QMessageBox::information(
         this,
         "Carga masiva completada",
         "Las peliculas se cargaron y se mostraron en tbCargaMasiva y tbGestionar.");
+}
+
+void vistaAdmin::on_btnCargarClientes_clicked()
+{
+    const QString rutaJson = QFileDialog::getOpenFileName(
+        this,
+        "Seleccionar archivo JSON de clientes",
+        QString(),
+        "Archivos JSON (*.json);;Todos los archivos (*.*)");
+
+    if (rutaJson.isEmpty()) {
+        return;
+    }
+
+    datosCine().arbolClientes.cargarJSON(
+        rutaJson.toStdString(), datosCine().tablaReservas);
+    llenarTablaClientesCargaMasiva();
+    llenarTablaGestionarClientes();
+
+    QMessageBox::information(
+        this,
+        "Carga masiva completada",
+        "Los clientes se insertaron en el Arbol B y sus reservas en la Tabla Hash.");
 }
 
 void vistaAdmin::on_btnAgregarPeli_clicked()
@@ -337,6 +451,100 @@ void vistaAdmin::on_btnEliminarPeli_clicked()
     QMessageBox::information(this, "Pelicula eliminada", "La pelicula se elimino correctamente.");
 }
 
+void vistaAdmin::on_comboOrden_currentIndexChanged(int index)
+{
+    Q_UNUSED(index);
+    llenarTablaGestionar();
+}
+
+void vistaAdmin::on_comboCliente_currentIndexChanged(int index)
+{
+    Q_UNUSED(index);
+    llenarTablaGestionarClientes();
+}
+
+void vistaAdmin::on_btnEditarPeli_clicked()
+{
+    const int filaSeleccionada = ui->tbGestionar->currentRow();
+    if (filaSeleccionada < 0 || ui->tbGestionar->item(filaSeleccionada, 0) == nullptr) {
+        QMessageBox::warning(this, "Seleccion requerida", "Selecciona una pelicula para editar.");
+        return;
+    }
+
+    const QString codigo = ui->tbGestionar->item(filaSeleccionada, 0)->text().trimmed();
+    Pelicula* pelicula = datosCine().arbolPeliculas.buscarPorCodigo(codigo.toStdString());
+    if (pelicula == nullptr) {
+        QMessageBox::warning(this, "Pelicula no encontrada", "No se encontro la pelicula seleccionada.");
+        return;
+    }
+
+    bool ok = false;
+    const QString titulo = QInputDialog::getText(this, "Editar pelicula", "Titulo:",
+        QLineEdit::Normal, QString::fromStdString(pelicula->getTitulo()), &ok);
+    if (!ok || titulo.trimmed().isEmpty()) return;
+    const QString genero = QInputDialog::getText(this, "Editar pelicula", "Genero:",
+        QLineEdit::Normal, QString::fromStdString(pelicula->getGenero()), &ok);
+    if (!ok) return;
+    const QString duracion = QInputDialog::getText(this, "Editar pelicula", "Duracion (min):",
+        QLineEdit::Normal, QString::fromStdString(pelicula->getDuracion()), &ok);
+    if (!ok) return;
+    const QString clasificacion = QInputDialog::getText(this, "Editar pelicula", "Clasificacion:",
+        QLineEdit::Normal, QString::fromStdString(pelicula->getClasificacion()), &ok);
+    if (!ok) return;
+    const QString idioma = QInputDialog::getText(this, "Editar pelicula", "Idioma:",
+        QLineEdit::Normal, QString::fromStdString(pelicula->getIdioma()), &ok);
+    if (!ok) return;
+    const QString fechaEstreno = QInputDialog::getText(this, "Editar pelicula", "Fecha estreno:",
+        QLineEdit::Normal, QString::fromStdString(pelicula->getFechaEstreno()), &ok);
+    if (!ok) return;
+    const QString fechaFin = QInputDialog::getText(this, "Editar pelicula", "Fecha fin:",
+        QLineEdit::Normal, QString::fromStdString(pelicula->getFechaFin()), &ok);
+    if (!ok) return;
+
+    pelicula->setTitulo(titulo.trimmed().toStdString());
+    pelicula->setGenero(genero.trimmed().toStdString());
+    pelicula->setDuracion(duracion.trimmed().toStdString());
+    pelicula->setClasificacion(clasificacion.trimmed().toStdString());
+    pelicula->setIdioma(idioma.trimmed().toStdString());
+    pelicula->setFechaEstreno(fechaEstreno.trimmed().toStdString());
+    pelicula->setFechaFin(fechaFin.trimmed().toStdString());
+
+    llenarTablaCargaMasiva();
+    llenarTablaGestionar();
+    llenarTablaCartelera();
+    QMessageBox::information(this, "Pelicula actualizada", "La pelicula se edito correctamente.");
+}
+
+void vistaAdmin::on_btnEliminarCliente_clicked()
+{
+    bool ok = false;
+    const QString id = QInputDialog::getText(
+        this, "Eliminar cliente", "ID del cliente:", QLineEdit::Normal, QString(), &ok).trimmed();
+    if (!ok || id.isEmpty()) {
+        return;
+    }
+
+    if (datosCine().arbolClientes.buscar(id.toStdString()) == nullptr) {
+        QMessageBox::warning(this, "Cliente no encontrado", "No existe un cliente con ese ID.");
+        return;
+    }
+
+    const QMessageBox::StandardButton confirmacion = QMessageBox::question(
+        this, "Confirmar eliminacion", "¿Deseas eliminar el cliente " + id + "?");
+    if (confirmacion != QMessageBox::Yes) {
+        return;
+    }
+
+    if (!datosCine().arbolClientes.eliminarCliente(id.toStdString(), datosCine().tablaReservas)) {
+        QMessageBox::warning(this, "No se pudo eliminar", "El cliente no pudo eliminarse.");
+        return;
+    }
+
+    llenarTablaClientesCargaMasiva();
+    llenarTablaGestionarClientes();
+    QMessageBox::information(this, "Cliente eliminado", "El cliente se elimino correctamente.");
+}
+
 
 
 
@@ -414,7 +622,7 @@ void vistaAdmin::on_btnCrearFuncion_clicked()
     ui->labelFuncion->setText(
         "Pelicula: " + funcionCreada.pelicula + " | " + funcionCreada.sala
         + " | Horario: " + funcionCreada.horario);
-    ui->tabWidget->setCurrentWidget(ui->tab_8);
+    ui->tbGestionarClientes->setCurrentWidget(ui->tab_8);
 
     QMessageBox::information(this, "Funcion creada", "La funcion se creo con todos sus asientos libres.");
 }
@@ -586,62 +794,61 @@ void vistaAdmin::on_tabla_promociones_cellClicked(int row, int column) {
 
 void vistaAdmin::on_btnReporte1_clicked()
 {
-    ui->lblReporte1->show();
-    ui->lblReporte3->hide();
-    ui->lblReporte4->hide();
-    const QString carpeta = QCoreApplication::applicationDirPath();
-    const QString rutaDot = carpeta + "/reporte_cartelera.dot";
-    const QString rutaPng = carpeta + "/reporte_cartelera.png";
-    const QString fechaActual = QDate::currentDate().toString("yyyy-MM-dd");
-
     if (datosCine().arbolPeliculas.estaVacio()) {
-        QMessageBox::warning(this, "Cartelera vacia", "No hay peliculas registradas para generar el reporte.");
+        QMessageBox::warning(this, "Arbol vacio", "No hay peliculas registradas para generar el reporte.");
         return;
     }
-    if (!datosCine().arbolPeliculas.generarReporteCartelera(
-            rutaDot.toStdString(), rutaPng.toStdString(), fechaActual.toStdString())) {
-        QMessageBox::critical(this, "Error de reporte", "No se pudo generar el grafo con Graphviz.");
-        return;
-    }
-
-    const QPixmap imagen(rutaPng);
+    datosCine().arbolPeliculas.generarDot();
+    const QPixmap imagen(QDir::currentPath() + "/arbol_peliculas.png");
     if (imagen.isNull()) {
-        QMessageBox::critical(this, "Error de reporte", "Graphviz no genero una imagen valida.");
+        QMessageBox::critical(this, "Error de reporte", "No se pudo cargar el reporte del BST.");
         return;
     }
-    ui->lblReporte1->setPixmap(imagen.scaled(
-        ui->lblReporte1->size(), Qt::KeepAspectRatio, Qt::SmoothTransformation));
-    ui->lblReporte1->setToolTip("Verde: en cartelera | Amarillo: proxima a retirar");
+    ui->lblReporte1->setPixmap(imagen.scaled(ui->lblReporte1->size(), Qt::KeepAspectRatio, Qt::SmoothTransformation));
+    ui->lblReporte1->show();
+    ui->lblReporte2->hide(); ui->lblReporte3->hide(); ui->lblReporte4->hide(); ui->lblReporte5->hide();
+}
+
+void vistaAdmin::on_btnReporte2_clicked()
+{
+    datosCine().arbolFunciones.generarReporte();
+    const QPixmap imagen(QDir::currentPath() + "/reporte_avl.png");
+    if (imagen.isNull()) {
+        QMessageBox::critical(this, "Error de reporte", "No se pudo cargar el reporte del AVL.");
+        return;
+    }
+    ui->lblReporte2->setPixmap(imagen.scaled(ui->lblReporte2->size(), Qt::KeepAspectRatio, Qt::SmoothTransformation));
+    ui->lblReporte1->hide(); ui->lblReporte2->show(); ui->lblReporte3->hide(); ui->lblReporte4->hide(); ui->lblReporte5->hide();
 }
 
 void vistaAdmin::on_btnReporte3_clicked()
 {
-    ui->lblReporte1->hide();
-    ui->lblReporte3->show();
-    ui->lblReporte4->hide();
-    const QString carpeta = QCoreApplication::applicationDirPath();
-    const QString rutaDot = carpeta + "/reporte_promociones_beneficios.dot";
-    const QString rutaPng = carpeta + "/reporte_promociones_beneficios.png";
-
-    if (!datosCine().promociones.generarReportePromociones(
-            rutaDot.toStdString(), rutaPng.toStdString())) {
-        QMessageBox::critical(this, "Error de reporte", "No se pudo generar el grafo de promociones y beneficios.");
-        return;
-    }
-
-    const QPixmap imagen(rutaPng);
+    datosCine().arbolClientes.generarReporte();
+    const QPixmap imagen(QDir::currentPath() + "/reporte_arbolb.png");
     if (imagen.isNull()) {
-        QMessageBox::critical(this, "Error de reporte", "Graphviz no genero una imagen valida.");
+        QMessageBox::critical(this, "Error de reporte", "No se pudo cargar el reporte del Arbol B.");
         return;
     }
-    ui->lblReporte3->setPixmap(imagen.scaled(
-        ui->lblReporte3->size(), Qt::KeepAspectRatio, Qt::SmoothTransformation));
+    ui->lblReporte3->setPixmap(imagen.scaled(ui->lblReporte3->size(), Qt::KeepAspectRatio, Qt::SmoothTransformation));
+    ui->lblReporte1->hide(); ui->lblReporte2->hide(); ui->lblReporte3->show(); ui->lblReporte4->hide(); ui->lblReporte5->hide();
 }
 
 void vistaAdmin::on_btnReporte4_clicked()
 {
+    datosCine().tablaReservas.generarReporte();
+    const QPixmap imagen(QDir::currentPath() + "/reporte_hash.png");
+    if (imagen.isNull()) {
+        QMessageBox::critical(this, "Error de reporte", "No se pudo cargar el reporte de la Tabla Hash.");
+        return;
+    }
+    ui->lblReporte4->setPixmap(imagen.scaled(ui->lblReporte4->size(), Qt::KeepAspectRatio, Qt::SmoothTransformation));
+    ui->lblReporte1->hide(); ui->lblReporte2->hide(); ui->lblReporte3->hide(); ui->lblReporte4->show(); ui->lblReporte5->hide();
+}
+
+void vistaAdmin::on_btnReporte5_clicked()
+{
     if (datosCine().totalFunciones == 0) {
-        QMessageBox::warning(this, "Funciones vacias", "No hay funciones creadas para generar el mapa de asientos.");
+        QMessageBox::warning(this, "Funciones vacias", "No hay funciones creadas para generar el reporte de asientos.");
         return;
     }
 
@@ -674,7 +881,7 @@ void vistaAdmin::on_btnReporte4_clicked()
         return;
     }
 
-    const QString carpeta = QCoreApplication::applicationDirPath();
+    const QString carpeta = QDir::currentPath();
     const QString rutaDot = carpeta + "/reporte_matriz_asientos.dot";
     const QString rutaPng = carpeta + "/reporte_matriz_asientos.png";
     const QString titulo = "Funcion: " + funcion->pelicula + " - " + funcion->horario
@@ -690,9 +897,6 @@ void vistaAdmin::on_btnReporte4_clicked()
         QMessageBox::critical(this, "Error de reporte", "Graphviz no genero una imagen valida.");
         return;
     }
-    ui->lblReporte1->hide();
-    ui->lblReporte3->hide();
-    ui->lblReporte4->show();
-    ui->lblReporte4->setPixmap(imagen.scaled(
-        ui->lblReporte4->size(), Qt::KeepAspectRatio, Qt::SmoothTransformation));
+    ui->lblReporte5->setPixmap(imagen.scaled(ui->lblReporte5->size(), Qt::KeepAspectRatio, Qt::SmoothTransformation));
+    ui->lblReporte1->hide(); ui->lblReporte2->hide(); ui->lblReporte3->hide(); ui->lblReporte4->hide(); ui->lblReporte5->show();
 }

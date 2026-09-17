@@ -25,6 +25,8 @@ private:
 
 private slots:
     void on_btnIngresar_clicked();
+    void on_btnRegistro_clicked();
+    void on_btnCrearCuenta_clicked();
 };
 
 #endif // LOGIN_H

@@ -98,6 +98,9 @@ public:
         : pelicula(pelicula), izq(nullptr), der(nullptr) {}
 
         Pelicula getPelicula() const { return pelicula; }
+
+        Pelicula* getPunteroPelicula() { return &pelicula; }
+
         NodoArbolPeliculas* getIzq() const { return izq; }
         NodoArbolPeliculas* getDer() const { return der; }
 
@@ -114,6 +117,7 @@ private:
     NodoArbolPeliculas* insertarNodo(NodoArbolPeliculas* nodo, const Pelicula& pelicula);
     NodoArbolPeliculas* eliminarNodo(NodoArbolPeliculas* nodo, int codigoNumerico, bool& eliminado);
     NodoArbolPeliculas* obtenerNodoMinimo(NodoArbolPeliculas* nodo) const;
+    
     void generarDotAux(NodoArbolPeliculas* nodo, ofstream& archivo);
     void generarReporteAux(NodoArbolPeliculas* nodo, ofstream& archivo,
                            const string& fechaActual);

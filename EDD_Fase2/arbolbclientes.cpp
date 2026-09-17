@@ -48,6 +48,100 @@ Cliente* ArbolBClientes::buscar(const string& id) {
     return nullptr;
 }
 
+Cliente* ArbolBClientes::buscarCorreoRecursivo(NodoB* nodo, const string& correo) {
+    if (nodo == nullptr) {
+        return nullptr;
+    }
+
+    for (int indice = 0; indice < nodo->numClaves; ++indice) {
+        if (!nodo->esHoja) {
+            Cliente* encontrado = buscarCorreoRecursivo(nodo->hijos[indice], correo);
+            if (encontrado != nullptr) {
+                return encontrado;
+            }
+        }
+        if (nodo->clientes[indice]->getCorreo() == correo) {
+            return nodo->clientes[indice];
+        }
+    }
+
+    if (!nodo->esHoja) {
+        return buscarCorreoRecursivo(nodo->hijos[nodo->numClaves], correo);
+    }
+    return nullptr;
+}
+
+Cliente* ArbolBClientes::buscarPorCorreo(const string& correo) {
+    return buscarCorreoRecursivo(raiz, correo);
+}
+
+void ArbolBClientes::recolectarInorden(NodoB* nodo, vector<Cliente*>& clientes) {
+    if (nodo == nullptr) {
+        return;
+    }
+
+    for (int indice = 0; indice < nodo->numClaves; ++indice) {
+        if (!nodo->esHoja) {
+            recolectarInorden(nodo->hijos[indice], clientes);
+        }
+        clientes.push_back(nodo->clientes[indice]);
+    }
+
+    if (!nodo->esHoja) {
+        recolectarInorden(nodo->hijos[nodo->numClaves], clientes);
+    }
+}
+
+void recolectarPreordenClientes(NodoB* nodo, vector<Cliente*>& clientes) {
+    if (nodo == nullptr) {
+        return;
+    }
+
+    for (int indice = 0; indice < nodo->numClaves; ++indice) {
+        clientes.push_back(nodo->clientes[indice]);
+    }
+
+    if (!nodo->esHoja) {
+        for (int indice = 0; indice <= nodo->numClaves; ++indice) {
+            recolectarPreordenClientes(nodo->hijos[indice], clientes);
+        }
+    }
+}
+
+void recolectarPostordenClientes(NodoB* nodo, vector<Cliente*>& clientes) {
+    if (nodo == nullptr) {
+        return;
+    }
+
+    if (!nodo->esHoja) {
+        for (int indice = 0; indice <= nodo->numClaves; ++indice) {
+            recolectarPostordenClientes(nodo->hijos[indice], clientes);
+        }
+    }
+
+    for (int indice = 0; indice < nodo->numClaves; ++indice) {
+        clientes.push_back(nodo->clientes[indice]);
+    }
+}
+
+vector<Cliente*> ArbolBClientes::obtenerClientesInorden() {
+    vector<Cliente*> clientes;
+    recolectarInorden(raiz, clientes);
+    return clientes;
+}
+
+vector<Cliente*> ArbolBClientes::obtenerClientesPreorden() {
+    vector<Cliente*> clientes;
+    recolectarPreordenClientes(raiz, clientes);
+    return clientes;
+}
+
+vector<Cliente*> ArbolBClientes::obtenerClientesPostorden() {
+    vector<Cliente*> clientes;
+    recolectarPostordenClientes(raiz, clientes);
+    return clientes;
+}
+
 // === INSERCIÓN ===
 
 void ArbolBClientes::insertar(const Cliente& cliente) {
@@ -387,6 +481,36 @@ void ArbolBClientes::fusionar(NodoB* nodo, int indice) {
 
 using json = nlohmann::json;
 
+namespace {
+static std::string leerStringJson(const json& objeto, const std::initializer_list<const char*>& claves)
+{
+    for (const char* clave : claves) {
+        if (objeto.contains(clave) && !objeto[clave].is_null()) {
+            if (objeto[clave].is_string()) {
+                return objeto[clave].get<std::string>();
+            }
+            return objeto[clave].dump();
+        }
+    }
+    return "";
+}
+
+static int leerEnteroJson(const json& objeto, const std::initializer_list<const char*>& claves)
+{
+    for (const char* clave : claves) {
+        if (objeto.contains(clave) && !objeto[clave].is_null()) {
+            if (objeto[clave].is_number_integer() || objeto[clave].is_number_unsigned()) {
+                return objeto[clave].get<int>();
+            }
+            if (objeto[clave].is_string()) {
+                return std::stoi(objeto[clave].get<std::string>());
+            }
+        }
+    }
+    return 0;
+}
+}
+
 void ArbolBClientes::cargarJSON(const std::string& ruta, TablaHash& tablaReservas) {
     std::ifstream archivo(ruta);
     if (!archivo.is_open()) {
@@ -398,55 +522,58 @@ void ArbolBClientes::cargarJSON(const std::string& ruta, TablaHash& tablaReserva
         json datosJson;
         archivo >> datosJson;
 
+        const json& clientesJson = datosJson.value("clientes", json::array());
         int clientesInsertados = 0;
         int reservasInsertadas = 0;
 
-        // Iterar sobre el arreglo principal de clientes
-        for (const auto& itemCliente : datosJson["clientes"]) {
-            
-            std::string id = itemCliente["id"];
-            std::string nombre = itemCliente["nombre"];
-            std::string correo = itemCliente["correo"];
-            std::string telefono = itemCliente["telefono"];
-            std::string password = itemCliente["password"];
-            
-            // Crear la instancia del cliente
+        for (const auto& itemCliente : clientesJson) {
+            if (!itemCliente.is_object()) {
+                continue;
+            }
+
+            const std::string id = leerStringJson(itemCliente, {"id"});
+            const std::string nombre = leerStringJson(itemCliente, {"nombre"});
+            const std::string correo = leerStringJson(itemCliente, {"correo"});
+            const std::string telefono = leerStringJson(itemCliente, {"telefono"});
+            const std::string password = leerStringJson(itemCliente, {"password"});
+
             Cliente nuevoCliente(id, nombre, correo, telefono, password);
 
-            // Validar si el cliente trae un arreglo de reservas
-            if (itemCliente.contains("reservas")) {
+            if (itemCliente.contains("reservas") && itemCliente["reservas"].is_array()) {
                 for (const auto& itemReserva : itemCliente["reservas"]) {
-                    // Cuidado aquí: Las llaves en este JSON tienen espacios según el PDF
-                    std::string codReserva = itemReserva["codigo reserva"];
-                    std::string codFuncion = itemReserva["codigo funcion"];
-                    int fila = itemReserva["fila"];
-                    int columna = itemReserva["columna"];
-                    std::string fecha = itemReserva["fecha reserva"];
+                    if (!itemReserva.is_object()) {
+                        continue;
+                    }
 
-                    // 1. Crear la reserva y guardarla en la Tabla Hash general
+                    const std::string codReserva = leerStringJson(itemReserva, {"codigo_reserva", "codigo reserva"});
+                    const std::string codFuncion = leerStringJson(itemReserva, {"codigo_funcion", "codigo funcion"});
+                    const int fila = leerEnteroJson(itemReserva, {"fila"});
+                    const int columna = leerEnteroJson(itemReserva, {"columna"});
+                    const std::string fecha = leerStringJson(itemReserva, {"fecha_reserva", "fecha reserva"});
+
+                    if (codReserva.empty() && codFuncion.empty()) {
+                        continue;
+                    }
+
                     Reserva nuevaReserva(codReserva, codFuncion, fila, columna, fecha);
                     tablaReservas.insertar(nuevaReserva);
                     reservasInsertadas++;
-
-                    // 2. Guardar únicamente el codigo_reserva dentro del perfil del cliente
                     nuevoCliente.agregarReserva(codReserva);
                 }
             }
 
-            // Finalmente, insertar al cliente (con sus referencias de reserva listas) en el Árbol B
             insertar(nuevoCliente);
             clientesInsertados++;
         }
 
-        std::cout << "Carga masiva exitosa. Clientes: " << clientesInsertados 
+        std::cout << "Carga masiva exitosa. Clientes: " << clientesInsertados
                   << " | Reservas: " << reservasInsertadas << std::endl;
 
-    } catch (json::parse_error& e) {
+    } catch (json::exception& e) {
         std::cout << "Error al parsear el JSON de clientes: " << e.what() << std::endl;
     }
 
     archivo.close();
-
 }
 
 

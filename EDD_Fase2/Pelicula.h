@@ -39,6 +39,14 @@ public:
     const string& getFechaEstreno() const { return fecha_streno; }
     const string& getFechaFin() const { return fecha_fin; }
 
+    void setTitulo(const string& valor) { titulo = valor; }
+    void setGenero(const string& valor) { genero = valor; }
+    void setDuracion(const string& valor) { duracion = valor; }
+    void setClasificacion(const string& valor) { clasificacion = valor; }
+    void setIdioma(const string& valor) { idioma = valor; }
+    void setFechaEstreno(const string& valor) { fecha_streno = valor; }
+    void setFechaFin(const string& valor) { fecha_fin = valor; }
+
     friend ostream& operator<<(ostream& os, const Pelicula& pelicula);
         
     

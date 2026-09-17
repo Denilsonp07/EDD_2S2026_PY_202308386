@@ -6,14 +6,14 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1070</width>
-    <height>698</height>
+    <width>1089</width>
+    <height>701</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>Dialog</string>
   </property>
-  <widget class="QTabWidget" name="tabWidget">
+  <widget class="QTabWidget" name="tbGestionarClientes">
    <property name="geometry">
     <rect>
      <x>10</x>
@@ -23,11 +23,11 @@
     </rect>
    </property>
    <property name="currentIndex">
-    <number>6</number>
+    <number>1</number>
    </property>
    <widget class="QWidget" name="tab">
     <attribute name="title">
-     <string>Gestionar</string>
+     <string>Gestionar Peli</string>
     </attribute>
     <widget class="QTableWidget" name="tbGestionar">
      <property name="geometry">
@@ -55,7 +55,7 @@
     <widget class="QPushButton" name="btnEliminarPeli">
      <property name="geometry">
       <rect>
-       <x>200</x>
+       <x>340</x>
        <y>510</y>
        <width>141</width>
        <height>41</height>
@@ -65,11 +65,62 @@
       <string>Eliminar</string>
      </property>
     </widget>
-    <widget class="QComboBox" name="comboBox">
+    <widget class="QComboBox" name="comboOrden">
      <property name="geometry">
       <rect>
        <x>800</x>
-       <y>10</y>
+       <y>20</y>
+       <width>231</width>
+       <height>28</height>
+      </rect>
+     </property>
+    </widget>
+    <widget class="QPushButton" name="btnEditarPeli">
+     <property name="geometry">
+      <rect>
+       <x>180</x>
+       <y>510</y>
+       <width>141</width>
+       <height>41</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Editar</string>
+     </property>
+    </widget>
+   </widget>
+   <widget class="QWidget" name="tab_4">
+    <attribute name="title">
+     <string>Gestionar Cli</string>
+    </attribute>
+    <widget class="QTableWidget" name="tbGestionarCli">
+     <property name="geometry">
+      <rect>
+       <x>20</x>
+       <y>60</y>
+       <width>1011</width>
+       <height>441</height>
+      </rect>
+     </property>
+    </widget>
+    <widget class="QPushButton" name="btnEliminarCliente">
+     <property name="geometry">
+      <rect>
+       <x>20</x>
+       <y>510</y>
+       <width>151</width>
+       <height>41</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Eliminar Cliente</string>
+     </property>
+    </widget>
+    <widget class="QComboBox" name="comboCliente">
+     <property name="geometry">
+      <rect>
+       <x>800</x>
+       <y>20</y>
        <width>231</width>
        <height>28</height>
       </rect>
@@ -83,9 +134,9 @@
     <widget class="QTableWidget" name="tbCargaMasiva">
      <property name="geometry">
       <rect>
-       <x>20</x>
+       <x>10</x>
        <y>50</y>
-       <width>1001</width>
+       <width>511</width>
        <height>451</height>
       </rect>
      </property>
@@ -101,6 +152,29 @@
      </property>
      <property name="text">
       <string>Cargar Peliculas</string>
+     </property>
+    </widget>
+    <widget class="QPushButton" name="btnCargarClientes">
+     <property name="geometry">
+      <rect>
+       <x>220</x>
+       <y>510</y>
+       <width>181</width>
+       <height>41</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Cargar Clientes</string>
+     </property>
+    </widget>
+    <widget class="QTableWidget" name="tbCargaMasiva2">
+     <property name="geometry">
+      <rect>
+       <x>530</x>
+       <y>50</y>
+       <width>511</width>
+       <height>451</height>
+      </rect>
      </property>
     </widget>
    </widget>
@@ -537,7 +611,7 @@
       </rect>
      </property>
      <property name="text">
-      <string>Presiona Reporte 3 para visualizar promociones y beneficios</string>
+      <string>Presiona Reporte 3 para visualizar el Arbol B de clientes</string>
      </property>
      <property name="alignment">
       <set>Qt::AlignmentFlag::AlignCenter</set>
@@ -553,7 +627,52 @@
       </rect>
      </property>
      <property name="text">
-      <string>Presiona Reporte 4 para visualizar el mapa de asientos</string>
+      <string>Presiona Reporte 4 para visualizar la Tabla Hash de reservas</string>
+     </property>
+     <property name="alignment">
+      <set>Qt::AlignmentFlag::AlignCenter</set>
+     </property>
+    </widget>
+    <widget class="QPushButton" name="btnReporte5">
+     <property name="geometry">
+      <rect>
+       <x>540</x>
+       <y>30</y>
+       <width>90</width>
+       <height>29</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Reporte 5</string>
+     </property>
+    </widget>
+    <widget class="QLabel" name="lblReporte2">
+     <property name="geometry">
+      <rect>
+       <x>30</x>
+       <y>75</y>
+       <width>991</width>
+       <height>465</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Presiona Reporte 2 para visualizar el Arbol AVL de funciones</string>
+     </property>
+     <property name="alignment">
+      <set>Qt::AlignmentFlag::AlignCenter</set>
+     </property>
+    </widget>
+    <widget class="QLabel" name="lblReporte5">
+     <property name="geometry">
+      <rect>
+       <x>30</x>
+       <y>75</y>
+       <width>991</width>
+       <height>465</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Presiona Reporte 5 para visualizar la Matriz Dispersa de asientos</string>
      </property>
      <property name="alignment">
       <set>Qt::AlignmentFlag::AlignCenter</set>

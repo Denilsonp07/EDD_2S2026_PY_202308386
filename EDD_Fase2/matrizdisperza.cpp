@@ -217,163 +217,116 @@ int MatrizDispersa::contarLibres() {
     return (totalFilas * totalColumnas) - contarOcupados();
 }
 
+
+
+
 // genera el reporte grafico de la matriz dispersa con Graphviz,
-// siguiendo la estructura que pide el enunciado (cabeceras + nodos de valor)
-void MatrizDispersa::generarDot(const std::string& tituloFuncion) {
-    std::ofstream archivo("matriz_asientos.dot");
+
+bool MatrizDispersa::generarReporteAsientos(const std::string& tituloFuncion, const std::string& rutaDot, const std::string& rutaPng) {
+    std::ofstream archivo(rutaDot);
+    if (!archivo.is_open()) return false;
+
     archivo << "digraph MatrizDispersa {\n";
-    archivo << "labelloc=\"t\";\nlabel=\"" << tituloFuncion << "\";\n";
-    archivo << "rankdir=TB;\n";
-    archivo << "node [shape=box, style=filled];\n";
+    archivo << "    label=\"" << tituloFuncion << "\";\n";
+    archivo << "    labelloc=\"t\";\n";
+    archivo << "    node [shape=box, fontname=\"Arial\", style=filled];\n";
+    
+    // El nodo raíz de la matriz
+    archivo << "    Raiz [label=\"Matriz\", group=0, fillcolor=gold];\n";
 
-    // nodo raiz "Funcion"
-    archivo << "\"Funcion\" [shape=diamond, fillcolor=white];\n";
-
-    // cabeceras de columna en una fila horizontal
+    // 1. GENERAR CABECERAS DE COLUMNA Y ALINEARLAS CON LA RAÍZ
     NodoCabecera* cabCol = cabecerasColumna;
-    std::string colAnterior = "Funcion";
-    while (cabCol != nullptr) {
-        std::string nombreCol = "ColCab" + std::to_string(cabCol->getIndice());
-        archivo << nombreCol << " [label=\"C" << cabCol->getIndice() << "\", fillcolor=gold];\n";
-        archivo << colAnterior << " -> " << nombreCol << ";\n";
-        colAnterior = nombreCol;
-        cabCol = cabCol->getSiguiente();
+    std::string rankCol = "{ rank=same; Raiz; ";
+    if (cabCol != nullptr) {
+        archivo << "    Raiz -> C" << cabCol->getIndice() << ";\n";
+        while (cabCol != nullptr) {
+            // El atributo 'group' fuerza a Graphviz a mantener la columna recta verticalmente
+            archivo << "    C" << cabCol->getIndice() << " [label=\"C" << cabCol->getIndice() 
+                    << "\", group=" << cabCol->getIndice() << ", fillcolor=lightblue];\n";
+            rankCol += "C" + std::to_string(cabCol->getIndice()) + "; ";
+            
+            if (cabCol->getSiguiente() != nullptr) {
+                archivo << "    C" << cabCol->getIndice() << " -> C" << cabCol->getSiguiente()->getIndice() << ";\n";
+            }
+            cabCol = cabCol->getSiguiente();
+        }
+    }
+    rankCol += "}\n";
+    archivo << rankCol; // Forzamos a que las cabeceras de columna estén horizontales
+
+    // 2. GENERAR CABECERAS DE FILA
+    NodoCabecera* cabFila = cabecerasFila;
+    if (cabFila != nullptr) {
+        archivo << "    Raiz -> F" << cabFila->getIndice() << ";\n";
+        while (cabFila != nullptr) {
+            archivo << "    F" << cabFila->getIndice() << " [label=\"F" << cabFila->getIndice() 
+                    << "\", group=0, fillcolor=lightgreen];\n";
+            
+            if (cabFila->getSiguiente() != nullptr) {
+                archivo << "    F" << cabFila->getIndice() << " -> F" << cabFila->getSiguiente()->getIndice() << ";\n";
+            }
+            cabFila = cabFila->getSiguiente();
+        }
     }
 
-    // cabeceras de fila y sus nodos de asiento ocupados
-    NodoCabecera* cabFila = cabecerasFila;
-    std::string filaAnterior = "Funcion";
+    // 3. GENERAR NODOS OCUPADOS (ASIENTOS) Y ALINEARLOS HORIZONTALMENTE
+    cabFila = cabecerasFila;
     while (cabFila != nullptr) {
-        std::string nombreFila = "FilaCab" + std::to_string(cabFila->getIndice());
-        archivo << nombreFila << " [label=\"F" << cabFila->getIndice() << "\", fillcolor=gold];\n";
-        archivo << filaAnterior << " -> " << nombreFila << ";\n";
-        filaAnterior = nombreFila;
+        NodoAsiento* actual = cabFila->getPrimero();
+        // Agrupamos la cabecera de fila con sus respectivos asientos
+        std::string rankFila = "{ rank=same; F" + std::to_string(cabFila->getIndice()) + "; ";
+        
+        while (actual != nullptr) {
+            std::string idNodo = "N" + std::to_string(actual->getFila()) + "_" + std::to_string(actual->getColumna());
+            
+            // Usamos getCliente() que ahora guarda el codigo_reserva
+            archivo << "    " << idNodo << " [label=\"" << actual->getCliente() 
+                    << "\", group=" << actual->getColumna() << ", fillcolor=salmon];\n";
+            rankFila += idNodo + "; ";
+            actual = actual->getDerecha();
+        }
+        rankFila += "}\n";
+        archivo << rankFila; // Forzamos alineación horizontal por cada fila
+        
+        cabFila = cabFila->getSiguiente();
+    }
 
-        NodoAsiento* asiento = cabFila->getPrimero();
-        std::string origenFila = nombreFila;
-        while (asiento != nullptr) {
-            std::string nombreNodo = "A_" + std::to_string(asiento->getFila()) + "_" + std::to_string(asiento->getColumna());
-            archivo << nombreNodo << " [label=\"" << asiento->getCliente() << "\", shape=circle, fillcolor=salmon];\n";
-            archivo << origenFila << " -> " << nombreNodo << ";\n";
-            origenFila = nombreNodo;
-            asiento = asiento->getDerecha();
+    // 4. CREAR ENLACES HORIZONTALES (FILAS -> NODOS)
+    cabFila = cabecerasFila;
+    while (cabFila != nullptr) {
+        NodoAsiento* actual = cabFila->getPrimero();
+        if (actual != nullptr) {
+            archivo << "    F" << cabFila->getIndice() << " -> N" << actual->getFila() << "_" << actual->getColumna() << ";\n";
+            while (actual->getDerecha() != nullptr) {
+                archivo << "    N" << actual->getFila() << "_" << actual->getColumna() << " -> N" 
+                        << actual->getDerecha()->getFila() << "_" << actual->getDerecha()->getColumna() << ";\n";
+                actual = actual->getDerecha();
+            }
         }
         cabFila = cabFila->getSiguiente();
     }
 
-    // estadisticas
-    archivo << "Stats [shape=note, fillcolor=white, label=\"Ocupados: " << contarOcupados()
-            << "\\nLibres: " << contarLibres()
-            << "\\nTotal: " << (totalFilas * totalColumnas) << "\"];\n";
-
-    archivo << "}\n";
-    archivo.close();
-
-    system("dot -Tpng matriz_asientos.dot -o matriz_asientos.png");
-    system("start matriz_asientos.png");
-}
-
-bool MatrizDispersa::generarReporteAsientos(
-    const std::string& tituloFuncion, const std::string& rutaDot, const std::string& rutaPng)
-{
-    std::ofstream archivo(rutaDot);
-    if (!archivo.is_open()) {
-        return false;
-    }
-
-        archivo << "digraph MatrizOrtogonal {\n"
-            << "rankdir=TB;\n"
-            << "bgcolor=white;\n"
-            << "labelloc=t;\n"
-            << "label=\"" << escaparGraphvizAsientos(tituloFuncion) << "\";\n"
-            << "nodesep=0.08; ranksep=0.18; splines=ortho;\n"
-            << "node [shape=box, fixedsize=true, width=0.72, height=0.42, fontsize=8, fontname=Arial, color=black];\n"
-            << "edge [color=\"#AAB7B8\", arrowsize=0.4, dir=both];\n";
-
-            archivo << "raiz [shape=box, style=filled, fillcolor=\"#F8F9F9\", label=\"(-1,-1)\"];\n";
-            archivo << "{ rank=same; raiz; ";
-    for (int columna = 1; columna <= totalColumnas; ++columna) {
-        archivo << "columna_" << columna << "; ";
-    }
-    archivo << "}\n";
-
-    for (int columna = 1; columna <= totalColumnas; ++columna) {
-        archivo << "columna_" << columna
-            << " [shape=box, style=filled, fillcolor=\"#AED6F1\", label=\"Columna "
-                << columna << "\"];\n";
-        if (columna == 1) {
-            archivo << "raiz -> columna_1 [dir=both];\n";
-        } else {
-            archivo << "columna_" << (columna - 1) << " -> columna_" << columna
-                    << " [dir=both, color=\"#5D6D7E\"];\n";
-        }
-    }
-    for (int fila = 1; fila <= totalFilas; ++fila) {
-        archivo << "fila_" << fila
-            << " [shape=box, style=filled, fillcolor=\"#AED6F1\", label=\"Fila "
-                << fila << "\"];\n";
-        if (fila == 1) {
-            archivo << "raiz -> fila_1 [dir=both];\n";
-        } else {
-            archivo << "fila_" << (fila - 1) << " -> fila_" << fila
-                    << " [dir=both, color=\"#5D6D7E\"];\n";
-        }
-    }
-
-    int reservados = 0;
-    for (int fila = 1; fila <= totalFilas; ++fila) {
-        for (int columna = 1; columna <= totalColumnas; ++columna) {
-            const std::string cliente = getClienteAsiento(fila, columna);
-            const bool ocupado = !cliente.empty();
-            if (ocupado) {
-                ++reservados;
+    // 5. CREAR ENLACES VERTICALES (COLUMNAS -> NODOS)
+    cabCol = cabecerasColumna;
+    while (cabCol != nullptr) {
+        NodoAsiento* actual = cabCol->getPrimero();
+        if (actual != nullptr) {
+            archivo << "    C" << cabCol->getIndice() << " -> N" << actual->getFila() << "_" << actual->getColumna() << ";\n";
+            while (actual->getAbajo() != nullptr) {
+                archivo << "    N" << actual->getFila() << "_" << actual->getColumna() << " -> N" 
+                        << actual->getAbajo()->getFila() << "_" << actual->getAbajo()->getColumna() << ";\n";
+                actual = actual->getAbajo();
             }
-            const std::string id = "asiento_" + std::to_string(fila) + "_" + std::to_string(columna);
-            const std::string etiqueta = ocupado ? escaparGraphvizAsientos(cliente) : "Libre";
-            const std::string color = ocupado ? "#F1948A" : "#82E0AA";
-                archivo << id << " [shape=box, style=filled, fillcolor=\"" << color
-                    << "\", label=\"" << etiqueta << "\"];\n";
-                archivo << "fila_" << fila << " -> " << id
-                    << " [dir=both, color=\"#85929E\", constraint=false];\n";
-                archivo << "columna_" << columna << " -> " << id
-                    << " [dir=both, color=\"#85929E\", constraint=false];\n";
         }
+        cabCol = cabCol->getSiguiente();
     }
 
-    for (int fila = 1; fila <= totalFilas; ++fila) {
-        for (int columna = 1; columna < totalColumnas; ++columna) {
-            archivo << "asiento_" << fila << "_" << columna << " -> asiento_"
-                    << fila << "_" << (columna + 1)
-                    << " [dir=none, color=\"#D5DBDB\", constraint=false];\n";
-        }
-    }
-    for (int fila = 1; fila < totalFilas; ++fila) {
-        for (int columna = 1; columna <= totalColumnas; ++columna) {
-            archivo << "asiento_" << fila << "_" << columna << " -> asiento_"
-                    << (fila + 1) << "_" << columna
-                    << " [dir=none, color=\"#D5DBDB\", constraint=false];\n";
-        }
-    }
-
-    for (int fila = 1; fila <= totalFilas; ++fila) {
-        archivo << "{ rank=same; fila_" << fila << ";";
-        for (int columna = 1; columna <= totalColumnas; ++columna) {
-            archivo << " asiento_" << fila << "_" << columna << ";";
-        }
-        archivo << " }\n";
-    }
-
-    const int total = totalFilas * totalColumnas;
-        archivo << "estadisticas [shape=box, style=filled, fillcolor=\"#F8F9F9\", label=\""
-            << "Total de asientos: " << total << "\\n"
-            << "Reservados: " << reservados << "\\n"
-            << "Libres: " << total - reservados << "\"];\n"
-            << "}\n";
+    archivo << "}\n";
     archivo.close();
 
-        std::remove(rutaPng.c_str());
-    const std::string comando = "C:/Progra~1/Graphviz/bin/dot.exe -Tpng \""
-        + rutaDot + "\" -o \"" + rutaPng + "\"";
+    // Ejecutar el comando para generar la imagen (Si estás en Linux/Mac puedes dejar solo dot. 
+    // Si estás en Windows y Graphviz no está en variables de entorno, pon la ruta completa a dot.exe)
+    const std::string comando = "dot -Tpng \"" + rutaDot + "\" -o \"" + rutaPng + "\"";
     return system(comando.c_str()) == 0;
 }
 

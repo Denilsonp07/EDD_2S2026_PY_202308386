@@ -231,9 +231,9 @@
      </property>
     </widget>
    </widget>
-   <widget class="QWidget" name="tab_3">
+   <widget class="QWidget" name="tab_2">
     <attribute name="title">
-     <string>Promociones Activas</string>
+     <string>Promociones activas</string>
     </attribute>
     <widget class="QTableWidget" name="tabla_promociones_cliente">
      <property name="geometry">
@@ -268,6 +268,163 @@
       </rect>
      </property>
     </widget>
+   </widget>
+   <widget class="QWidget" name="tab_3">
+    <attribute name="title">
+     <string>Mi Perfil e Historial</string>
+    </attribute>
+    <widget class="QLabel" name="label_perfil_nombre">
+     <property name="geometry">
+      <rect>
+       <x>20</x>
+       <y>18</y>
+       <width>90</width>
+       <height>24</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Nombre:</string>
+     </property>
+    </widget>
+    <widget class="QLineEdit" name="txt_nombre">
+     <property name="geometry">
+      <rect>
+       <x>110</x>
+       <y>15</y>
+       <width>220</width>
+       <height>28</height>
+      </rect>
+     </property>
+    </widget>
+    <widget class="QLabel" name="label_perfil_correo">
+     <property name="geometry">
+      <rect>
+       <x>355</x>
+       <y>18</y>
+       <width>80</width>
+       <height>24</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Correo:</string>
+     </property>
+    </widget>
+    <widget class="QLineEdit" name="txt_correo">
+     <property name="geometry">
+      <rect>
+       <x>435</x>
+       <y>15</y>
+       <width>250</width>
+       <height>28</height>
+      </rect>
+     </property>
+    </widget>
+    <widget class="QLabel" name="label_perfil_telefono">
+     <property name="geometry">
+      <rect>
+       <x>20</x>
+       <y>58</y>
+       <width>90</width>
+       <height>24</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Telefono:</string>
+     </property>
+    </widget>
+    <widget class="QLineEdit" name="txt_telefono">
+     <property name="geometry">
+      <rect>
+       <x>110</x>
+       <y>55</y>
+       <width>220</width>
+       <height>28</height>
+      </rect>
+     </property>
+    </widget>
+    <widget class="QLabel" name="label_perfil_password">
+     <property name="geometry">
+      <rect>
+       <x>355</x>
+       <y>58</y>
+       <width>80</width>
+       <height>24</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Clave:</string>
+     </property>
+    </widget>
+    <widget class="QLineEdit" name="txt_password">
+     <property name="geometry">
+      <rect>
+       <x>435</x>
+       <y>55</y>
+       <width>250</width>
+       <height>28</height>
+      </rect>
+     </property>
+     <property name="echoMode">
+      <enum>QLineEdit::EchoMode::Password</enum>
+     </property>
+    </widget>
+    <widget class="QPushButton" name="btn_guardar_perfil">
+     <property name="geometry">
+      <rect>
+       <x>720</x>
+       <y>30</y>
+       <width>180</width>
+       <height>42</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Guardar perfil</string>
+     </property>
+    </widget>
+    <widget class="QTableWidget" name="tabla_historial">
+     <property name="geometry">
+      <rect>
+       <x>20</x>
+       <y>125</y>
+       <width>980</width>
+       <height>350</height>
+      </rect>
+     </property>
+    </widget>
+    <widget class="QPushButton" name="btn_cancelar_reserva">
+     <property name="geometry">
+      <rect>
+       <x>20</x>
+       <y>495</y>
+       <width>190</width>
+       <height>42</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Cancelar reserva</string>
+     </property>
+    </widget>
+    <widget class="QLabel" name="label_historial">
+     <property name="geometry">
+      <rect>
+       <x>20</x>
+       <y>100</y>
+       <width>220</width>
+       <height>20</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Mis reservas</string>
+     </property>
+    </widget>
+   </widget>
+   <widget class="QPushButton" name="btnEditarPerfil">
+    <property name="text">
+     <string>Editar perfil</string>
+    </property>
+    <attribute name="title">
+     <string/>
+    </attribute>
    </widget>
   </widget>
   <widget class="QPushButton" name="btnSalir">
