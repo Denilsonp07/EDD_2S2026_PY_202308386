@@ -536,8 +536,10 @@ void ArbolBClientes::cargarJSON(const std::string& ruta, TablaHash& tablaReserva
             const std::string correo = leerStringJson(itemCliente, {"correo"});
             const std::string telefono = leerStringJson(itemCliente, {"telefono"});
             const std::string password = leerStringJson(itemCliente, {"password"});
+            const std::string tipo = leerStringJson(itemCliente, {"tipo"});
 
-            Cliente nuevoCliente(id, nombre, correo, telefono, password);
+            Cliente nuevoCliente(id, nombre, correo, telefono, password,
+                                 tipo.empty() ? "cliente" : tipo);
 
             if (itemCliente.contains("reservas") && itemCliente["reservas"].is_array()) {
                 for (const auto& itemReserva : itemCliente["reservas"]) {
@@ -625,3 +627,4 @@ void ArbolBClientes::generarReporte() {
     archivo.close();
     system("dot -Tpng reporte_arbolb.dot -o reporte_arbolb.png");
 }
+

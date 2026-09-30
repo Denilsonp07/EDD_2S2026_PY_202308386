@@ -21,8 +21,6 @@ class ArbolAVLFunciones {
 private:
     NodoAVL* raiz;
 
-    
-
     // Metodos matematicos para el balanceo
     int obtenerAltura(NodoAVL* nodo);
     int obtenerEquilibrio(NodoAVL* nodo);

@@ -23,9 +23,50 @@ private:
 
 public:
     Cliente(string _id = "", string _nombre = "", string _correo = "", 
-            string _telefono = "", string _password = "") 
+            string _telefono = "", string _password = "", string _tipo = "cliente") 
         : id(_id), nombre(_nombre), correo(_correo), telefono(_telefono), 
-          password(_password), tipo("cliente"), cabezaReservas(nullptr) {}
+          password(_password), tipo(_tipo), cabezaReservas(nullptr) {}
+
+    Cliente(const Cliente& otro)
+        : id(otro.id), nombre(otro.nombre), correo(otro.correo),
+          telefono(otro.telefono), password(otro.password), tipo(otro.tipo),
+          cabezaReservas(nullptr)
+    {
+        for (NodoReservaRef* reserva = otro.cabezaReservas;
+             reserva != nullptr;
+             reserva = reserva->siguiente) {
+            agregarReserva(reserva->codigo_reserva);
+        }
+    }
+
+    Cliente& operator=(const Cliente& otro)
+    {
+        if (this == &otro) {
+            return *this;
+        }
+
+        NodoReservaRef* actual = cabezaReservas;
+        while (actual != nullptr) {
+            NodoReservaRef* siguiente = actual->siguiente;
+            delete actual;
+            actual = siguiente;
+        }
+
+        id = otro.id;
+        nombre = otro.nombre;
+        correo = otro.correo;
+        telefono = otro.telefono;
+        password = otro.password;
+        tipo = otro.tipo;
+        cabezaReservas = nullptr;
+
+        for (NodoReservaRef* reserva = otro.cabezaReservas;
+             reserva != nullptr;
+             reserva = reserva->siguiente) {
+            agregarReserva(reserva->codigo_reserva);
+        }
+        return *this;
+    }
 
     ~Cliente() {
         // Liberacion de memoria de las reservas vinculadas
@@ -43,6 +84,7 @@ public:
     string getCorreo() const { return correo; }
     string getTelefono() const { return telefono; }
     string getPassword() const { return password; }
+    string getTipo() const { return tipo; }
     NodoReservaRef* getCabezaReservas() const {return cabezaReservas; }
 
     void setNombre(const string& valor) { nombre = valor; }

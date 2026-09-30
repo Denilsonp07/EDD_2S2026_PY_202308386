@@ -4,8 +4,16 @@
 #include "Pelicula.h"
 #include <fstream>
 #include <string>
+#include <vector>
 
 #include "arbolavlfunciones.h"
+
+struct ResultadoCargaPeliculas {
+    int peliculasInsertadas = 0;
+    int funcionesInsertadas = 0;
+    std::vector<std::string> peliculasRechazadas;
+    std::string error;
+};
 
 class ListaPeliculas {
 private:
@@ -159,7 +167,7 @@ private:
 
     Pelicula* buscarPorCodigo(const string& codigo); 
 
-    void cargarJSON(const string& ruta, ArbolAVLFunciones& arbolFunciones);
+    ResultadoCargaPeliculas cargarJSON(const string& ruta, ArbolAVLFunciones& arbolFunciones);
     
     
 };

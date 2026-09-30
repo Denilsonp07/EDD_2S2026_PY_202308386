@@ -3,6 +3,7 @@
 #include "json.hpp"
 #include <fstream>
 #include <iostream>
+#include <cctype>
 
 
 namespace {
@@ -38,6 +39,49 @@ std::string escaparGraphviz(const std::string& texto)
         resultado += caracter;
     }
     return resultado;
+}
+
+bool esCodigoNumerico(const std::string& codigo, char prefijo)
+{
+    if (codigo.size() != 4 || codigo[0] != prefijo) {
+        return false;
+    }
+    for (size_t indice = 1; indice < codigo.size(); ++indice) {
+        if (!std::isdigit(static_cast<unsigned char>(codigo[indice]))) {
+            return false;
+        }
+    }
+    return true;
+}
+
+bool esFechaISOValida(const std::string& fecha)
+{
+    if (fecha.size() != 10 || fecha[4] != '-' || fecha[7] != '-') {
+        return false;
+    }
+    for (size_t indice = 0; indice < fecha.size(); ++indice) {
+        if (indice == 4 || indice == 7) {
+            continue;
+        }
+        if (!std::isdigit(static_cast<unsigned char>(fecha[indice]))) {
+            return false;
+        }
+    }
+
+    const int mes = std::atoi(fecha.substr(5, 2).c_str());
+    const int dia = std::atoi(fecha.substr(8, 2).c_str());
+    if (mes < 1 || mes > 12 || dia < 1) {
+        return false;
+    }
+
+    const int diasPorMes[] = {31, 28, 31, 30, 31, 30,
+                              31, 31, 30, 31, 30, 31};
+    int limite = diasPorMes[mes - 1];
+    const int anio = std::atoi(fecha.substr(0, 4).c_str());
+    if (mes == 2 && (anio % 400 == 0 || (anio % 4 == 0 && anio % 100 != 0))) {
+        limite = 29;
+    }
+    return dia <= limite;
 }
 }
 
@@ -369,48 +413,75 @@ Pelicula* ArbolBinarioDeBusquedaPeliculas::buscarPorCodigo(const string& codigo)
 
 using json = nlohmann::json;
 
-void ArbolBinarioDeBusquedaPeliculas::cargarJSON(const std::string& ruta, ArbolAVLFunciones& arbolFunciones) {
+ResultadoCargaPeliculas ArbolBinarioDeBusquedaPeliculas::cargarJSON(
+    const std::string& ruta, ArbolAVLFunciones& arbolFunciones) {
+    ResultadoCargaPeliculas resultado;
     std::ifstream archivo(ruta);
     if (!archivo.is_open()) {
         std::cout << "No se pudo abrir el archivo JSON '" << ruta << "'." << std::endl;
-        return;
+        resultado.error = "No se pudo abrir el archivo JSON.";
+        return resultado;
     }
 
     try {
         json datosJson;
         archivo >> datosJson;
 
-        int peliculasInsertadas = 0;
-        int funcionesInsertadas = 0;
-
         // 1. Iterar sobre el arreglo principal de películas
         for (const auto& itemPelicula : datosJson["peliculas"]) {
             
-            std::string codigoPeli = itemPelicula["codigo"];
-            std::string titulo = itemPelicula["titulo"];
-            std::string genero = itemPelicula["genero"];
-            std::string duracion = std::to_string((int)itemPelicula["duracion"]); 
-            std::string clasificacion = itemPelicula["clasificacion"];
-            std::string idioma = itemPelicula["idioma"];
-            std::string fechaEstreno = itemPelicula.value(
-                "fechaEstreno", itemPelicula.value("fecha estreno", ""));
-            std::string fechaFin = itemPelicula.value(
-                "fechaFin", itemPelicula.value("fecha fin", ""));
+            if (!itemPelicula.is_object()) {
+                resultado.peliculasRechazadas.push_back("Registro sin formato de objeto");
+                continue;
+            }
+
+            const std::string codigoPeli = itemPelicula.value("codigo", "");
+            const std::string titulo = itemPelicula.value("titulo", "");
+            const std::string genero = itemPelicula.value("genero", "");
+            const std::string clasificacion = itemPelicula.value("clasificacion", "");
+            const std::string idioma = itemPelicula.value("idioma", "");
+            const std::string fechaEstreno = itemPelicula.value("fecha_estreno", "");
+            const std::string fechaFin = itemPelicula.value("fecha_fin", "");
+
+            std::string duracion;
+            int duracionNumerica = 0;
+            if (itemPelicula.contains("duracion") &&
+                (itemPelicula["duracion"].is_number_integer() ||
+                 itemPelicula["duracion"].is_number_unsigned())) {
+                duracionNumerica = itemPelicula["duracion"].get<int>();
+                duracion = std::to_string(duracionNumerica);
+            }
+
+            if (!esCodigoNumerico(codigoPeli, 'P') || titulo.empty() ||
+                duracion.empty() || duracionNumerica <= 0 ||
+                !esFechaISOValida(fechaEstreno) ||
+                !esFechaISOValida(fechaFin)) {
+                resultado.peliculasRechazadas.push_back(
+                    codigoPeli.empty() ? "Película sin código" : codigoPeli);
+                continue;
+            }
 
             // Insertar pelicula en el BST
             Pelicula nuevaPelicula(codigoPeli, titulo, genero, duracion, clasificacion, idioma, fechaEstreno, fechaFin);
             insertar(nuevaPelicula);
-            peliculasInsertadas++;
+            resultado.peliculasInsertadas++;
 
             // 2. Extraer el arreglo anidado de funciones de esta película especifica
-            if (itemPelicula.contains("funciones")) {
+            if (itemPelicula.contains("funciones") && itemPelicula["funciones"].is_array()) {
                 for (const auto& itemFuncion : itemPelicula["funciones"]) {
-                    std::string codFuncion = itemFuncion.value(
-                        "codigo", itemFuncion.value("codigo_funcion", ""));
-                    std::string horario = itemFuncion["horario"];
-                    std::string sala = itemFuncion["sala"];
-                    int filas = itemFuncion.value("filas", 10);
-                    int columnas = itemFuncion.value("columnas", 10);
+                    if (!itemFuncion.is_object()) {
+                        continue;
+                    }
+                    const std::string codFuncion = itemFuncion.value("codigo_funcion", "");
+                    const std::string horario = itemFuncion.value("horario", "");
+                    const std::string sala = itemFuncion.value("sala", "");
+                    const int filas = itemFuncion.value("filas", 0);
+                    const int columnas = itemFuncion.value("columnas", 0);
+
+                    if (!esCodigoNumerico(codFuncion, 'F') || horario.empty() ||
+                        sala.empty() || filas <= 0 || columnas <= 0) {
+                        continue;
+                    }
 
                     // Crear el objeto funcion vinculandolo al codigo de su pelicula
                     Funcion nuevaFuncion(codFuncion, codigoPeli, horario, sala, filas, columnas);
@@ -419,19 +490,22 @@ void ArbolBinarioDeBusquedaPeliculas::cargarJSON(const std::string& ruta, ArbolA
                     // Nota: El metodo insertar() del AVL le asignara automaticamente 
                     // su archivo_asientos vacio ("F00X_funcion.json") segun el requerimiento
                     arbolFunciones.insertar(nuevaFuncion);
-                    funcionesInsertadas++;
+                    resultado.funcionesInsertadas++;
                 }
             }
         }
 
-        std::cout << "Carga masiva exitosa. Peliculas: " << peliculasInsertadas 
-                  << " | Funciones: " << funcionesInsertadas << std::endl;
+          std::cout << "Carga masiva completada. Peliculas: " << resultado.peliculasInsertadas
+              << " | Funciones: " << resultado.funcionesInsertadas
+              << " | Peliculas rechazadas: " << resultado.peliculasRechazadas.size() << std::endl;
 
     } catch (json::exception& e) {
         std::cout << "Error al parsear el JSON: " << e.what() << std::endl;
+        resultado.error = e.what();
     }
 
     archivo.close();
+    return resultado;
 }
 
 

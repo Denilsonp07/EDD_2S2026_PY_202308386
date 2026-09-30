@@ -1,0 +1,246 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>login</class>
+ <widget class="QDialog" name="login">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>671</width>
+    <height>755</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Dialog</string>
+  </property>
+  <widget class="QLabel" name="label">
+   <property name="geometry">
+    <rect>
+     <x>130</x>
+     <y>30</y>
+     <width>391</width>
+     <height>71</height>
+    </rect>
+   </property>
+   <property name="font">
+    <font>
+     <pointsize>36</pointsize>
+    </font>
+   </property>
+   <property name="text">
+    <string>CINEMA USAC</string>
+   </property>
+  </widget>
+  <widget class="QLabel" name="label_2">
+   <property name="geometry">
+    <rect>
+     <x>100</x>
+     <y>200</y>
+     <width>131</width>
+     <height>31</height>
+    </rect>
+   </property>
+   <property name="font">
+    <font>
+     <pointsize>18</pointsize>
+    </font>
+   </property>
+   <property name="text">
+    <string>USUARIO</string>
+   </property>
+  </widget>
+  <widget class="QLabel" name="label_3">
+   <property name="geometry">
+    <rect>
+     <x>100</x>
+     <y>300</y>
+     <width>191</width>
+     <height>31</height>
+    </rect>
+   </property>
+   <property name="font">
+    <font>
+     <pointsize>18</pointsize>
+    </font>
+   </property>
+   <property name="text">
+    <string>CONTRASEÑA</string>
+   </property>
+  </widget>
+  <widget class="QLineEdit" name="lineEdit">
+   <property name="geometry">
+    <rect>
+     <x>350</x>
+     <y>190</y>
+     <width>201</width>
+     <height>41</height>
+    </rect>
+   </property>
+  </widget>
+  <widget class="QLineEdit" name="lineEdit_2">
+   <property name="geometry">
+    <rect>
+     <x>350</x>
+     <y>290</y>
+     <width>201</width>
+     <height>41</height>
+    </rect>
+   </property>
+   <property name="echoMode">
+    <enum>QLineEdit::EchoMode::Password</enum>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="btnIngresar">
+   <property name="geometry">
+    <rect>
+     <x>350</x>
+     <y>420</y>
+     <width>181</width>
+     <height>61</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>INGRESAR</string>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="btnRegistro">
+   <property name="geometry">
+    <rect>
+     <x>100</x>
+     <y>420</y>
+     <width>191</width>
+     <height>61</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>REGISTRO</string>
+   </property>
+  </widget>
+  <widget class="QGroupBox" name="panelRegistro">
+   <property name="geometry">
+    <rect>
+     <x>80</x>
+    <y>535</y>
+     <width>540</width>
+     <height>175</height>
+    </rect>
+   </property>
+   <property name="visible">
+    <bool>false</bool>
+   </property>
+   <property name="title">
+    <string>Crear cuenta</string>
+   </property>
+   <widget class="QLabel" name="lblRegistroNombre">
+    <property name="geometry">
+     <rect>
+      <x>15</x>
+      <y>30</y>
+      <width>90</width>
+      <height>24</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Nombre:</string>
+    </property>
+   </widget>
+   <widget class="QLineEdit" name="txtRegistroNombre">
+    <property name="geometry">
+     <rect>
+      <x>110</x>
+      <y>27</y>
+      <width>160</width>
+      <height>28</height>
+     </rect>
+    </property>
+   </widget>
+   <widget class="QLabel" name="lblRegistroCorreo">
+    <property name="geometry">
+     <rect>
+      <x>285</x>
+      <y>30</y>
+      <width>70</width>
+      <height>24</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Correo:</string>
+    </property>
+   </widget>
+   <widget class="QLineEdit" name="txtRegistroCorreo">
+    <property name="geometry">
+     <rect>
+      <x>355</x>
+      <y>27</y>
+      <width>165</width>
+      <height>28</height>
+     </rect>
+    </property>
+   </widget>
+   <widget class="QLabel" name="lblRegistroTelefono">
+    <property name="geometry">
+     <rect>
+      <x>15</x>
+      <y>75</y>
+      <width>90</width>
+      <height>24</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Telefono:</string>
+    </property>
+   </widget>
+   <widget class="QLineEdit" name="txtRegistroTelefono">
+    <property name="geometry">
+     <rect>
+      <x>110</x>
+      <y>72</y>
+      <width>160</width>
+      <height>28</height>
+     </rect>
+    </property>
+   </widget>
+   <widget class="QLabel" name="lblRegistroPassword">
+    <property name="geometry">
+     <rect>
+      <x>285</x>
+      <y>75</y>
+      <width>70</width>
+      <height>24</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Clave:</string>
+    </property>
+   </widget>
+   <widget class="QLineEdit" name="txtRegistroPassword">
+    <property name="geometry">
+     <rect>
+      <x>355</x>
+      <y>72</y>
+      <width>165</width>
+      <height>28</height>
+     </rect>
+    </property>
+    <property name="echoMode">
+     <enum>QLineEdit::EchoMode::Password</enum>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="btnCrearCuenta">
+    <property name="geometry">
+     <rect>
+      <x>115</x>
+      <y>120</y>
+      <width>310</width>
+      <height>42</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>CREAR CUENTA</string>
+    </property>
+   </widget>
+  </widget>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>

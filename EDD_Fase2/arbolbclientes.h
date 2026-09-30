@@ -37,7 +37,6 @@ private:
     // Metodo recursivo para listar (Inorden adaptado para multiples claves)
     void mostrarInordenRecursivo(NodoB* nodo);
 
-    
     //LOGICA DE ELIMINACION
 
     void eliminarRecursivo(NodoB* nodo, int idNumerico);
@@ -48,7 +47,6 @@ private:
     void pedirPrestadoAnterior(NodoB* nodo, int indice);
     void pedirPrestadoSiguiente(NodoB* nodo, int indice);
     void fusionar(NodoB* nodo, int indice);
-
 
 
 public:

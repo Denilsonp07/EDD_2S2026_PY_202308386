@@ -19,6 +19,19 @@
 #include <QPixmap>
 #include <QDir>
 
+namespace {
+QString reservasComoTexto(const Cliente* cliente)
+{
+    QStringList reservas;
+    for (NodoReservaRef* reserva = cliente->getCabezaReservas();
+         reserva != nullptr;
+         reserva = reserva->siguiente) {
+        reservas.append(QString::fromStdString(reserva->codigo_reserva));
+    }
+    return reservas.join(", ");
+}
+}
+
 vistaAdmin::vistaAdmin(QWidget *parent)
     : QDialog(parent)
     , ui(new Ui::vistaAdmin)
@@ -94,9 +107,10 @@ void vistaAdmin::configurarTablaCargaMasiva()
 
 void vistaAdmin::configurarTablaClientesCargaMasiva()
 {
-    ui->tbCargaMasiva2->setColumnCount(5);
+    ui->tbCargaMasiva2->setColumnCount(7);
     ui->tbCargaMasiva2->setHorizontalHeaderLabels(
-        QStringList() << "ID" << "Nombre" << "Correo" << "Telefono" << "Contrasena");
+        QStringList() << "ID" << "Nombre" << "Correo" << "Telefono"
+                      << "Contrasena" << "Tipo" << "Reservas");
     ui->tbCargaMasiva2->setRowCount(0);
     ui->tbCargaMasiva2->setEditTriggers(QAbstractItemView::NoEditTriggers);
     ui->tbCargaMasiva2->setSelectionBehavior(QAbstractItemView::SelectRows);
@@ -122,9 +136,10 @@ void vistaAdmin::configurarTablaGestionar()
 
 void vistaAdmin::configurarTablaGestionarClientes()
 {
-    ui->tbGestionarCli->setColumnCount(5);
+    ui->tbGestionarCli->setColumnCount(7);
     ui->tbGestionarCli->setHorizontalHeaderLabels(
-        QStringList() << "ID" << "Nombre" << "Correo" << "Telefono" << "Contrasena");
+        QStringList() << "ID" << "Nombre" << "Correo" << "Telefono"
+                      << "Contrasena" << "Tipo" << "Reservas");
     ui->tbGestionarCli->setRowCount(0);
     ui->tbGestionarCli->setEditTriggers(QAbstractItemView::NoEditTriggers);
     ui->tbGestionarCli->setSelectionBehavior(QAbstractItemView::SelectRows);
@@ -190,6 +205,10 @@ void vistaAdmin::llenarTablaClientesCargaMasiva()
             new QTableWidgetItem(QString::fromStdString(cliente->getTelefono())));
         ui->tbCargaMasiva2->setItem(fila, 4,
             new QTableWidgetItem(QString::fromStdString(cliente->getPassword())));
+        ui->tbCargaMasiva2->setItem(fila, 5,
+            new QTableWidgetItem(QString::fromStdString(cliente->getTipo())));
+        ui->tbCargaMasiva2->setItem(fila, 6,
+            new QTableWidgetItem(reservasComoTexto(cliente)));
     }
 
     ui->tbCargaMasiva2->resizeRowsToContents();
@@ -244,6 +263,8 @@ void vistaAdmin::llenarTablaGestionarClientes()
         ui->tbGestionarCli->setItem(fila, 2, new QTableWidgetItem(QString::fromStdString(cliente->getCorreo())));
         ui->tbGestionarCli->setItem(fila, 3, new QTableWidgetItem(QString::fromStdString(cliente->getTelefono())));
         ui->tbGestionarCli->setItem(fila, 4, new QTableWidgetItem(QString::fromStdString(cliente->getPassword())));
+        ui->tbGestionarCli->setItem(fila, 5, new QTableWidgetItem(QString::fromStdString(cliente->getTipo())));
+        ui->tbGestionarCli->setItem(fila, 6, new QTableWidgetItem(reservasComoTexto(cliente)));
     }
     ui->tbGestionarCli->resizeRowsToContents();
 }
@@ -309,17 +330,38 @@ void vistaAdmin::on_btnCargarPeli_clicked()
     }
 
     datosCine().arbolPeliculas.limpiar();
-    datosCine().arbolPeliculas.cargarJSON(
+    const ResultadoCargaPeliculas resultado = datosCine().arbolPeliculas.cargarJSON(
         rutaCsv.toStdString(), datosCine().arbolFunciones);
     llenarTablaCargaMasiva();
     llenarTablaGestionar();
     llenarTablaGestionarClientes();
     llenarTablaCartelera();
 
-    QMessageBox::information(
-        this,
-        "Carga masiva completada",
-        "Las peliculas se cargaron y se mostraron en tbCargaMasiva y tbGestionar.");
+    if (!resultado.error.empty()) {
+        QMessageBox::warning(
+            this,
+            "Error en la carga masiva",
+            QString::fromStdString(resultado.error));
+        return;
+    }
+
+    QString mensaje = QString("Peliculas cargadas: %1\nFunciones cargadas: %2")
+        .arg(resultado.peliculasInsertadas)
+        .arg(resultado.funcionesInsertadas);
+
+    if (!resultado.peliculasRechazadas.empty()) {
+        QStringList rechazadas;
+        for (const std::string& pelicula : resultado.peliculasRechazadas) {
+            rechazadas.append(QString::fromStdString(pelicula));
+        }
+        mensaje += QString("\n\nAviso: %1 pelicula(s) no se pudieron cargar por errores del JSON:\n%2")
+            .arg(resultado.peliculasRechazadas.size())
+            .arg(rechazadas.join(", "));
+
+        QMessageBox::warning(this, "Carga masiva con advertencias", mensaje);
+    } else {
+        QMessageBox::information(this, "Carga masiva completada", mensaje);
+    }
 }
 
 void vistaAdmin::on_btnCargarClientes_clicked()
