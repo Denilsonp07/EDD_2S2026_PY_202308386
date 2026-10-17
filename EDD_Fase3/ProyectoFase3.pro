@@ -9,6 +9,7 @@ SOURCES += \
     arbolavlfunciones.cpp \
     arbolbclientes.cpp \
     arbolbinariopeliculas.cpp \
+    grafosedes.cpp \
     funcion.cpp \
     listabeneficios.cpp \
     listapromociones.cpp \
@@ -38,6 +39,7 @@ HEADERS += \
     vistacliente.h \
     Pelicula.h \
     json.hpp \
+    grafosedes.h \
     mainwindow.h
 
 FORMS += \

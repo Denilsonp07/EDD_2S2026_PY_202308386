@@ -1,69 +1,85 @@
 #ifndef GRAFOSEDES_H
 #define GRAFOSEDES_H
 
-#include <string>
-#include <iostream>
 #include <fstream>
+#include <iostream>
+#include <string>
+
+#include "arbolavlfunciones.h"
 
 using namespace std;
 
-//  Estructura para la Sede
 class Sede {
 public:
     string codigo;
     string nombre;
     string direccion;
-    int cantidadSalas;
+    int cantidad_salas;
     string telefono;
 
-    Sede(string cod = "", string nom = "", string dir = "", int salas = 0, string tel = "")
-        : codigo(cod), nombre(nom), direccion(dir), cantidadSalas(salas), telefono(tel) {}
+    Sede(string cod = "", string nom = "", string dir = "", int salas = 0,
+         string tel = "")
+        : codigo(cod), nombre(nom), direccion(dir), cantidad_salas(salas),
+          telefono(tel) {}
 };
 
-// Nodo Adyacencia (La Arista / Conexión)
 class Arco {
 public:
-    string codigoDestino; // Código de la sede con la que conecta
-    int peso;             // Cantidad de películas en común
-    Arco* siguiente;      // Siguiente conexión en la lista de adyacencia
+    string codigoDestino;
+    int peso;
+    Arco* siguiente;
 
-    Arco(string destino, int p) : codigoDestino(destino), peso(p), siguiente(nullptr) {}
+    Arco(const string& destino, int valor)
+        : codigoDestino(destino), peso(valor), siguiente(nullptr) {}
 };
 
-// Nodo del Grafo (Vertice)
 class VerticeSede {
 public:
     Sede sede;
-    VerticeSede* siguiente; // Siguiente vértice en la lista principal
-    Arco* listaAdyacencia;  // Cabeza de la lista de conexiones de este vértice
+    VerticeSede* siguiente;
+    Arco* listaAdyacencia;
 
-    VerticeSede(const Sede& s) : sede(s), siguiente(nullptr), listaAdyacencia(nullptr) {}
+    explicit VerticeSede(const Sede& valor)
+        : sede(valor), siguiente(nullptr), listaAdyacencia(nullptr) {}
 };
 
-// Estructura Principal del Grafo No Dirigido Ponderado
 class GrafoSedes {
 private:
-    VerticeSede* cabeza; // Inicio de la lista de vértices
+    VerticeSede* cabeza;
 
-    // Métodos auxiliares
-    VerticeSede* buscarVertice(const string& codigo) const;
-    void agregarArcoDirigido(const string& origen, const string& destino, int peso);
+    void agregarArcoDirigido(const string& origen, const string& destino,
+                             int peso);
     void eliminarArcosDeVertice(VerticeSede* vertice);
+    int cantidadVertices() const;
+    bool existeArco(const VerticeSede* vertice, const string& destino) const;
 
 public:
     GrafoSedes();
     ~GrafoSedes();
 
-    // Requisitos Fase 3
+    VerticeSede* buscarVertice(const string& codigo) const;
+    void limpiar();
     void insertarVertice(const Sede& sede);
-    void agregarAristaNoDirigida(const string& origen, const string& destino, int peso);
-    
-    // Consultas y Reportes
-    void mostrarGrafoConsola() const; 
-    bool generarReporteGrafo(const string& rutaDot, const string& rutaPng) const;
-    bool generarReporteAdyacencia(const string& rutaDot, const string& rutaPng) const;
+    void agregarAristaNoDirigida(const string& origen, const string& destino,
+                                 int peso);
 
+    void calcularAristas(ArbolAVLFunciones& arbolFunciones);
+    void verPeliculasPorSede(const string& codigoSede,
+                             ArbolAVLFunciones& arbolFunciones) const;
+    void buscarCaminoMasCorto(const string& origen,
+                              const string& destino) const;
+    void verRankingSedesSimilares() const;
 
+    void mostrarGrafoConsola() const;
+    bool generarReporteGrafo(
+        const string& rutaDot = "reporte_grafo_sedes.dot",
+        const string& rutaPng = "reporte_grafo_sedes.png") const;
+    bool generarReporteListaAdyacencia(
+        const string& rutaDot = "reporte_lista_adyacencia.dot",
+        const string& rutaPng = "reporte_lista_adyacencia.png") const;
+    bool generarReporteAdyacencia(
+        const string& rutaDot = "reporte_lista_adyacencia.dot",
+        const string& rutaPng = "reporte_lista_adyacencia.png") const;
 };
 
-#endif // GRAFOSEDES_H
+#endif

@@ -1,4 +1,5 @@
 #include "arbolbinariopeliculas.h"
+#include "grafosedes.h"
 
 #include "json.hpp"
 #include <fstream>
@@ -414,7 +415,8 @@ Pelicula* ArbolBinarioDeBusquedaPeliculas::buscarPorCodigo(const string& codigo)
 using json = nlohmann::json;
 
 ResultadoCargaPeliculas ArbolBinarioDeBusquedaPeliculas::cargarJSON(
-    const std::string& ruta, ArbolAVLFunciones& arbolFunciones) {
+    const std::string& ruta, ArbolAVLFunciones& arbolFunciones, GrafoSedes& grafo) {
+    
     ResultadoCargaPeliculas resultado;
     std::ifstream archivo(ruta);
     if (!archivo.is_open()) {
@@ -427,77 +429,108 @@ ResultadoCargaPeliculas ArbolBinarioDeBusquedaPeliculas::cargarJSON(
         json datosJson;
         archivo >> datosJson;
 
-        // 1. Iterar sobre el arreglo principal de películas
-        for (const auto& itemPelicula : datosJson["peliculas"]) {
-            
-            if (!itemPelicula.is_object()) {
-                resultado.peliculasRechazadas.push_back("Registro sin formato de objeto");
-                continue;
-            }
+        // NUEVO PASO 1: Cargar las Sedes primero para poder validar las funciones después
+        grafo.limpiar();
+        if (datosJson.contains("sedes") && datosJson["sedes"].is_array()) {
+            for (const auto& itemSede : datosJson["sedes"]) {
+                if (!itemSede.is_object()) continue;
 
-            const std::string codigoPeli = itemPelicula.value("codigo", "");
-            const std::string titulo = itemPelicula.value("titulo", "");
-            const std::string genero = itemPelicula.value("genero", "");
-            const std::string clasificacion = itemPelicula.value("clasificacion", "");
-            const std::string idioma = itemPelicula.value("idioma", "");
-            const std::string fechaEstreno = itemPelicula.value("fecha_estreno", "");
-            const std::string fechaFin = itemPelicula.value("fecha_fin", "");
+                std::string codSede = itemSede.value("codigo", "");
+                std::string nombre = itemSede.value("nombre", "");
+                std::string direccion = itemSede.value("direccion", "");
+                int salas = itemSede.value(
+                    "cantidad_salas", itemSede.value("cantidad salas", 0));
+                std::string telefono = itemSede.value("telefono", "");
 
-            std::string duracion;
-            int duracionNumerica = 0;
-            if (itemPelicula.contains("duracion") &&
-                (itemPelicula["duracion"].is_number_integer() ||
-                 itemPelicula["duracion"].is_number_unsigned())) {
-                duracionNumerica = itemPelicula["duracion"].get<int>();
-                duracion = std::to_string(duracionNumerica);
-            }
-
-            if (!esCodigoNumerico(codigoPeli, 'P') || titulo.empty() ||
-                duracion.empty() || duracionNumerica <= 0 ||
-                !esFechaISOValida(fechaEstreno) ||
-                !esFechaISOValida(fechaFin)) {
-                resultado.peliculasRechazadas.push_back(
-                    codigoPeli.empty() ? "Película sin código" : codigoPeli);
-                continue;
-            }
-
-            // Insertar pelicula en el BST
-            Pelicula nuevaPelicula(codigoPeli, titulo, genero, duracion, clasificacion, idioma, fechaEstreno, fechaFin);
-            insertar(nuevaPelicula);
-            resultado.peliculasInsertadas++;
-
-            // 2. Extraer el arreglo anidado de funciones de esta película especifica
-            if (itemPelicula.contains("funciones") && itemPelicula["funciones"].is_array()) {
-                for (const auto& itemFuncion : itemPelicula["funciones"]) {
-                    if (!itemFuncion.is_object()) {
-                        continue;
-                    }
-                    const std::string codFuncion = itemFuncion.value("codigo_funcion", "");
-                    const std::string horario = itemFuncion.value("horario", "");
-                    const std::string sala = itemFuncion.value("sala", "");
-                    const int filas = itemFuncion.value("filas", 0);
-                    const int columnas = itemFuncion.value("columnas", 0);
-
-                    if (!esCodigoNumerico(codFuncion, 'F') || horario.empty() ||
-                        sala.empty() || filas <= 0 || columnas <= 0) {
-                        continue;
-                    }
-
-                    // Crear el objeto funcion vinculandolo al codigo de su pelicula
-                    Funcion nuevaFuncion(codFuncion, codigoPeli, horario, sala, filas, columnas);
-                    
-                    // Insertar en el arbol AVL
-                    // Nota: El metodo insertar() del AVL le asignara automaticamente 
-                    // su archivo_asientos vacio ("F00X_funcion.json") segun el requerimiento
-                    arbolFunciones.insertar(nuevaFuncion);
-                    resultado.funcionesInsertadas++;
+                if (!codSede.empty()) {
+                    Sede nuevaSede(codSede, nombre, direccion, salas, telefono);
+                    grafo.insertarVertice(nuevaSede);
                 }
             }
         }
 
-          std::cout << "Carga masiva completada. Peliculas: " << resultado.peliculasInsertadas
-              << " | Funciones: " << resultado.funcionesInsertadas
-              << " | Peliculas rechazadas: " << resultado.peliculasRechazadas.size() << std::endl;
+        // 2. Iterar sobre el arreglo principal de películas (Tu código original)
+        if (datosJson.contains("peliculas") && datosJson["peliculas"].is_array()) {
+            for (const auto& itemPelicula : datosJson["peliculas"]) {
+                
+                if (!itemPelicula.is_object()) {
+                    resultado.peliculasRechazadas.push_back("Registro sin formato de objeto");
+                    continue;
+                }
+
+                const std::string codigoPeli = itemPelicula.value("codigo", "");
+                const std::string titulo = itemPelicula.value("titulo", "");
+                const std::string genero = itemPelicula.value("genero", "");
+                const std::string clasificacion = itemPelicula.value("clasificacion", "");
+                const std::string idioma = itemPelicula.value("idioma", "");
+                const std::string fechaEstreno = itemPelicula.value("fecha_estreno", "");
+                const std::string fechaFin = itemPelicula.value("fecha_fin", "");
+
+                std::string duracion;
+                int duracionNumerica = 0;
+                if (itemPelicula.contains("duracion") &&
+                    (itemPelicula["duracion"].is_number_integer() ||
+                     itemPelicula["duracion"].is_number_unsigned())) {
+                    duracionNumerica = itemPelicula["duracion"].get<int>();
+                    duracion = std::to_string(duracionNumerica);
+                }
+
+                if (!esCodigoNumerico(codigoPeli, 'P') || titulo.empty() ||
+                    duracion.empty() || duracionNumerica <= 0 ||
+                    !esFechaISOValida(fechaEstreno) ||
+                    !esFechaISOValida(fechaFin)) {
+                    resultado.peliculasRechazadas.push_back(
+                        codigoPeli.empty() ? "Película sin código" : codigoPeli);
+                    continue;
+                }
+
+                // Insertar pelicula en el BST
+                Pelicula nuevaPelicula(codigoPeli, titulo, genero, duracion, clasificacion, idioma, fechaEstreno, fechaFin);
+                insertar(nuevaPelicula);
+                resultado.peliculasInsertadas++;
+
+                // 3. Extraer el arreglo anidado de funciones
+                if (itemPelicula.contains("funciones") && itemPelicula["funciones"].is_array()) {
+                    for (const auto& itemFuncion : itemPelicula["funciones"]) {
+                        if (!itemFuncion.is_object()) continue;
+                        
+                        const std::string codFuncion = itemFuncion.value("codigo_funcion", "");
+                        const std::string horario = itemFuncion.value("horario", "");
+                        const std::string sala = itemFuncion.value("sala", "");
+                        const int filas = itemFuncion.value("filas", 0);
+                        const int columnas = itemFuncion.value("columnas", 0);
+                        
+                        // NUEVOS CAMPOS FASE 3
+                        const std::string fechaFunc = itemFuncion.value("fecha", "");
+                        const std::string sedeFunc = itemFuncion.value("sede", "");
+
+                        if (!esCodigoNumerico(codFuncion, 'F') || horario.empty() ||
+                            sala.empty() || filas <= 0 || columnas <= 0 || sedeFunc.empty()) {
+                            continue;
+                        }
+
+                        // NUEVA VALIDACIÓN: Si la sede no existe en el grafo, la función se rechaza
+                        if (grafo.buscarVertice(sedeFunc) == nullptr) {
+                            continue; 
+                        }
+
+                        // Crear el objeto funcion vinculandolo al codigo de su pelicula y su sede
+                        Funcion nuevaFuncion(codFuncion, codigoPeli, horario, sala,
+                                             filas, columnas, fechaFunc, sedeFunc);
+                        
+                        arbolFunciones.insertar(nuevaFuncion);
+                        resultado.funcionesInsertadas++;
+                    }
+                }
+            }
+        }
+
+        std::cout << "Carga masiva completada. Peliculas: " << resultado.peliculasInsertadas
+                  << " | Funciones: " << resultado.funcionesInsertadas
+                  << " | Peliculas rechazadas: " << resultado.peliculasRechazadas.size() << std::endl;
+
+        // NUEVO PASO 4: Una vez cargado todo, el grafo calcula sus conexiones
+        grafo.calcularAristas(arbolFunciones);
 
     } catch (json::exception& e) {
         std::cout << "Error al parsear el JSON: " << e.what() << std::endl;
@@ -507,5 +540,3 @@ ResultadoCargaPeliculas ArbolBinarioDeBusquedaPeliculas::cargarJSON(
     archivo.close();
     return resultado;
 }
-
-

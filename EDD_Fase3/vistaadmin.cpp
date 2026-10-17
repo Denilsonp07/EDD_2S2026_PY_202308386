@@ -331,7 +331,7 @@ void vistaAdmin::on_btnCargarPeli_clicked()
 
     datosCine().arbolPeliculas.limpiar();
     const ResultadoCargaPeliculas resultado = datosCine().arbolPeliculas.cargarJSON(
-        rutaCsv.toStdString(), datosCine().arbolFunciones);
+        rutaCsv.toStdString(), datosCine().arbolFunciones, datosCine().grafoSedes);
     llenarTablaCargaMasiva();
     llenarTablaGestionar();
     llenarTablaGestionarClientes();
@@ -351,8 +351,9 @@ void vistaAdmin::on_btnCargarPeli_clicked()
 
     if (!resultado.peliculasRechazadas.empty()) {
         QStringList rechazadas;
-        for (const std::string& pelicula : resultado.peliculasRechazadas) {
-            rechazadas.append(QString::fromStdString(pelicula));
+        for (int indice = 0; indice < resultado.peliculasRechazadas.size(); ++indice) {
+            rechazadas.append(QString::fromStdString(
+                resultado.peliculasRechazadas[indice]));
         }
         mensaje += QString("\n\nAviso: %1 pelicula(s) no se pudieron cargar por errores del JSON:\n%2")
             .arg(resultado.peliculasRechazadas.size())

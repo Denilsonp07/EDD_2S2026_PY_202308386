@@ -7,6 +7,7 @@
 #include "arbolbclientes.h"
 #include "listapromociones.h"
 #include "matrizdisperza.h"
+#include "grafosedes.h"
 
 struct FuncionCine {
     QString pelicula;
@@ -35,6 +36,7 @@ struct DatosCine {
     ArbolBClientes arbolClientes;
     TablaHash tablaReservas;
     ListaCircularPromociones promociones;
+    GrafoSedes grafoSedes;
     FuncionCine* primeraFuncion;
     int totalFunciones;
 

@@ -14,12 +14,15 @@ private:
     int filas;
     int columnas;
     string archivo_asientos;
+
+    string fecha; // Nueva variable para almacenar la fecha de la función   
+    string sede;  // Nueva variable para almacenar la sede de la función    
     
 public:
     Funcion();
 
     Funcion(string codF = "", string codP = "", string hor = "", 
-            string sal = "", int f = 0, int c = 0);
+            string sal = "", int f = 0, int c = 0, string fe = "", string se = "");
 
     // Getters
     string getCodigoFuncion() const;
@@ -29,6 +32,8 @@ public:
     int getFilas() const;
     int getColumnas() const;
     string getArchivoAsientos() const;
+    string getFecha() const;
+    string getSede() const;
 
     // Setters
     void setCodigoFuncion(const string& codigo_funcion);
@@ -38,6 +43,8 @@ public:
     void setFilas(int filas);
     void setColumnas(int columnas);
     void setArchivoAsientos(const string& archivo_asientos);
+    void setFecha(const string& fecha);
+    void setSede(const string& sede);
 
 
 };

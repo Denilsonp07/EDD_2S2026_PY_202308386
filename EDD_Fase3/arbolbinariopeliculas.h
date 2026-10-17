@@ -4,14 +4,57 @@
 #include "Pelicula.h"
 #include <fstream>
 #include <string>
-#include <vector>
 
 #include "arbolavlfunciones.h"
+
+class GrafoSedes;
+
+class ListaMensajes {
+private:
+    std::string* datos;
+    int tamanio;
+    int capacidad;
+
+public:
+    ListaMensajes() : datos(nullptr), tamanio(0), capacidad(0) {}
+    ListaMensajes(const ListaMensajes& otra)
+        : datos(nullptr), tamanio(0), capacidad(0) {
+        for (int i = 0; i < otra.tamanio; ++i) push_back(otra.datos[i]);
+    }
+    ~ListaMensajes() { delete[] datos; }
+
+    ListaMensajes& operator=(const ListaMensajes& otra) {
+        if (this != &otra) {
+            delete[] datos;
+            datos = nullptr;
+            tamanio = 0;
+            capacidad = 0;
+            for (int i = 0; i < otra.tamanio; ++i) push_back(otra.datos[i]);
+        }
+        return *this;
+    }
+
+    void push_back(const std::string& mensaje) {
+        if (tamanio == capacidad) {
+            int nuevaCapacidad = capacidad == 0 ? 4 : capacidad * 2;
+            std::string* nuevo = new std::string[nuevaCapacidad];
+            for (int i = 0; i < tamanio; ++i) nuevo[i] = datos[i];
+            delete[] datos;
+            datos = nuevo;
+            capacidad = nuevaCapacidad;
+        }
+        datos[tamanio++] = mensaje;
+    }
+
+    bool empty() const { return tamanio == 0; }
+    int size() const { return tamanio; }
+    const std::string& operator[](int indice) const { return datos[indice]; }
+};
 
 struct ResultadoCargaPeliculas {
     int peliculasInsertadas = 0;
     int funcionesInsertadas = 0;
-    std::vector<std::string> peliculasRechazadas;
+    ListaMensajes peliculasRechazadas;
     std::string error;
 };
 
@@ -167,7 +210,7 @@ private:
 
     Pelicula* buscarPorCodigo(const string& codigo); 
 
-    ResultadoCargaPeliculas cargarJSON(const string& ruta, ArbolAVLFunciones& arbolFunciones);
+    ResultadoCargaPeliculas cargarJSON(const std::string& ruta, ArbolAVLFunciones& arbolFunciones, GrafoSedes& grafo);
     
     
 };
