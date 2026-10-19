@@ -8,6 +8,7 @@
 #include "listapromociones.h"
 #include "matrizdisperza.h"
 #include "grafosedes.h"
+#include "blockchain.h"
 
 struct FuncionCine {
     QString pelicula;
@@ -37,6 +38,7 @@ struct DatosCine {
     TablaHash tablaReservas;
     ListaCircularPromociones promociones;
     GrafoSedes grafoSedes;
+    Blockchain blockchain;
     FuncionCine* primeraFuncion;
     int totalFunciones;
 

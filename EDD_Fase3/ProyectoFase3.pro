@@ -10,6 +10,8 @@ SOURCES += \
     arbolbclientes.cpp \
     arbolbinariopeliculas.cpp \
     grafosedes.cpp \
+    blockchain.cpp \
+    sha256.cpp \
     funcion.cpp \
     listabeneficios.cpp \
     listapromociones.cpp \
@@ -40,6 +42,7 @@ HEADERS += \
     Pelicula.h \
     json.hpp \
     grafosedes.h \
+    blockchain.h \
     mainwindow.h
 
 FORMS += \
