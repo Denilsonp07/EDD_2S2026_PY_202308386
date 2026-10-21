@@ -6,7 +6,11 @@
 #include <iomanip>
 #include <iostream>
 #include <sstream>
+#ifdef _WIN32
+#include <direct.h>
+#else
 #include <sys/stat.h>
+#endif
 
 using nlohmann::json;
 
@@ -313,7 +317,11 @@ bool Blockchain::generarBloque() {
 }
 
 bool Blockchain::guardarBloqueJSONInterno(const Bloque* bloque) const {
+#ifdef _WIN32
+    _mkdir("blocks");
+#else
     mkdir("blocks", 0777);
+#endif
     string ruta = "blocks/block" + to_string(bloque->INDEX) + ".json";
     ofstream archivo(ruta.c_str());
     if (!archivo.is_open()) return false;

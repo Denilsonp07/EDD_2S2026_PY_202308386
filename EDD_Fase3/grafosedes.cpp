@@ -3,6 +3,26 @@
 #include <cstdlib>
 
 namespace {
+string escaparJson(const string& valor) {
+    string resultado;
+    for (size_t i = 0; i < valor.size(); ++i) {
+        unsigned char caracter = static_cast<unsigned char>(valor[i]);
+        if (caracter == '"' || caracter == '\\') {
+            resultado += '\\';
+            resultado += static_cast<char>(caracter);
+        } else if (caracter == '\n') {
+            resultado += "\\n";
+        } else if (caracter == '\r') {
+            resultado += "\\r";
+        } else if (caracter == '\t') {
+            resultado += "\\t";
+        } else {
+            resultado += static_cast<char>(caracter);
+        }
+    }
+    return resultado;
+}
+
 struct PeliculaSede {
     string codigo;
     PeliculaSede* siguiente;
@@ -66,6 +86,24 @@ void GrafoSedes::limpiar() {
         delete cabeza;
         cabeza = siguiente;
     }
+
+}
+
+string GrafoSedes::serializarSedes() const {
+    string resultado = "{\"sedes\":[";
+    bool primera = true;
+    for (VerticeSede* actual = cabeza; actual != nullptr;
+         actual = actual->siguiente) {
+        if (!primera) resultado += ',';
+        primera = false;
+        resultado += "{\"codigo\":\"" + escaparJson(actual->sede.codigo)
+            + "\",\"nombre\":\"" + escaparJson(actual->sede.nombre)
+            + "\",\"direccion\":\"" + escaparJson(actual->sede.direccion)
+            + "\",\"cantidad_salas\":" + to_string(actual->sede.cantidad_salas)
+            + ",\"telefono\":\"" + escaparJson(actual->sede.telefono) + "\"}";
+    }
+    resultado += "]}";
+    return resultado;
 }
 
 void GrafoSedes::eliminarArcosDeVertice(VerticeSede* vertice) {

@@ -147,6 +147,63 @@ NodoAVL* ArbolAVLFunciones::insertarNodo(NodoAVL* nodo, const Funcion& funcion) 
     return nodo; // Retornar el puntero sin cambios si ya esta balanceado
 }
 
+void ArbolAVLFunciones::recolectarInorden(
+    NodoAVL* nodo, ListaFunciones& funciones) const {
+    if (nodo == nullptr) return;
+    recolectarInorden(nodo->izq, funciones);
+    funciones.agregar(nodo->funcion);
+    recolectarInorden(nodo->der, funciones);
+}
+
+ListaFunciones ArbolAVLFunciones::obtenerFuncionesInorden() const {
+    ListaFunciones funciones;
+    recolectarInorden(raiz, funciones);
+    return funciones;
+}
+
+namespace {
+string escaparJsonFuncion(const string& valor) {
+    string resultado;
+    for (size_t i = 0; i < valor.size(); ++i) {
+        unsigned char caracter = static_cast<unsigned char>(valor[i]);
+        if (caracter == '"' || caracter == '\\') {
+            resultado += '\\';
+            resultado += static_cast<char>(caracter);
+        } else if (caracter == '\n') {
+            resultado += "\\n";
+        } else if (caracter == '\r') {
+            resultado += "\\r";
+        } else if (caracter == '\t') {
+            resultado += "\\t";
+        } else {
+            resultado += static_cast<char>(caracter);
+        }
+    }
+    return resultado;
+}
+}
+
+string ArbolAVLFunciones::serializarFunciones() const {
+    ListaFunciones funciones = obtenerFuncionesInorden();
+    string resultado = "{\"funciones\":[";
+    for (int i = 0; i < funciones.size(); ++i) {
+        if (i > 0) resultado += ',';
+        Funcion& funcion = funciones[i];
+        resultado += "{\"codigo_funcion\":\""
+            + escaparJsonFuncion(funcion.getCodigoFuncion())
+            + "\",\"codigo_pelicula\":\""
+            + escaparJsonFuncion(funcion.getCodigoPelicula())
+            + "\",\"horario\":\"" + escaparJsonFuncion(funcion.getHorario())
+            + "\",\"sala\":\"" + escaparJsonFuncion(funcion.getSala())
+            + "\",\"filas\":" + to_string(funcion.getFilas())
+            + ",\"columnas\":" + to_string(funcion.getColumnas())
+            + ",\"fecha\":\"" + escaparJsonFuncion(funcion.getFecha())
+            + "\",\"sede\":\"" + escaparJsonFuncion(funcion.getSede()) + "\"}";
+    }
+    resultado += "]}";
+    return resultado;
+}
+
 // === BÚSQUEDA ===
 
 Funcion* ArbolAVLFunciones::buscar(const string& codigo) {

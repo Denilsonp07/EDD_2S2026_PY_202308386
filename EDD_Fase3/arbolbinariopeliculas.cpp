@@ -6,6 +6,28 @@
 #include <iostream>
 #include <cctype>
 
+namespace {
+std::string escaparJsonPelicula(const std::string& valor) {
+    std::string resultado;
+    for (size_t i = 0; i < valor.size(); ++i) {
+        unsigned char caracter = static_cast<unsigned char>(valor[i]);
+        if (caracter == '"' || caracter == '\\') {
+            resultado += '\\';
+            resultado += static_cast<char>(caracter);
+        } else if (caracter == '\n') {
+            resultado += "\\n";
+        } else if (caracter == '\r') {
+            resultado += "\\r";
+        } else if (caracter == '\t') {
+            resultado += "\\t";
+        } else {
+            resultado += static_cast<char>(caracter);
+        }
+    }
+    return resultado;
+}
+}
+
 
 namespace {
 int fechaComoNumero(const std::string& fecha)
@@ -409,6 +431,28 @@ Pelicula* ArbolBinarioDeBusquedaPeliculas::buscarPorCodigo(const string& codigo)
 
     }
     return nullptr;
+}
+
+std::string ArbolBinarioDeBusquedaPeliculas::serializarPeliculas() const {
+    ListaPeliculas peliculas = obtenerPeliculasInorden();
+    std::string resultado = "{\"peliculas\":[";
+    for (int i = 0; i < peliculas.size(); ++i) {
+        if (i > 0) resultado += ',';
+        const Pelicula& pelicula = peliculas[i];
+        resultado += "{\"codigo\":\"" + escaparJsonPelicula(pelicula.getCodigo())
+            + "\",\"titulo\":\"" + escaparJsonPelicula(pelicula.getTitulo())
+            + "\",\"genero\":\"" + escaparJsonPelicula(pelicula.getGenero())
+            + "\",\"duracion\":\"" + escaparJsonPelicula(pelicula.getDuracion())
+            + "\",\"clasificacion\":\""
+            + escaparJsonPelicula(pelicula.getClasificacion())
+            + "\",\"idioma\":\"" + escaparJsonPelicula(pelicula.getIdioma())
+            + "\",\"fecha_estreno\":\""
+            + escaparJsonPelicula(pelicula.getFechaEstreno())
+            + "\",\"fecha_fin\":\""
+            + escaparJsonPelicula(pelicula.getFechaFin()) + "\"}";
+    }
+    resultado += "]}";
+    return resultado;
 }
 
 

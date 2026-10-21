@@ -12,6 +12,8 @@ SOURCES += \
     grafosedes.cpp \
     blockchain.cpp \
     sha256.cpp \
+    lzw.cpp \
+    persistencia.cpp \
     funcion.cpp \
     listabeneficios.cpp \
     listapromociones.cpp \
@@ -43,6 +45,8 @@ HEADERS += \
     json.hpp \
     grafosedes.h \
     blockchain.h \
+    lzw.h \
+    persistencia.h \
     mainwindow.h
 
 FORMS += \

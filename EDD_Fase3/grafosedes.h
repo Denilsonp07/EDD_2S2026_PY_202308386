@@ -59,6 +59,7 @@ public:
 
     VerticeSede* buscarVertice(const string& codigo) const;
     void limpiar();
+    string serializarSedes() const;
     void insertarVertice(const Sede& sede);
     void agregarAristaNoDirigida(const string& origen, const string& destino,
                                  int peso);

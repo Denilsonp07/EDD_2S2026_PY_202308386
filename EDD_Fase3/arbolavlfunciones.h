@@ -90,6 +90,7 @@ public:
     ~ArbolAVLFunciones();
 
     ListaFunciones obtenerFuncionesInorden() const;
+    string serializarFunciones() const;
 
     void insertar(const Funcion& funcion);
     bool eliminarPorCodigo(const string& codigo);

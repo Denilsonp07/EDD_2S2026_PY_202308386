@@ -201,6 +201,7 @@ private:
                                  const string& fechaActual) const;
     void mostrarInorden();
     ListaPeliculas obtenerPeliculasInorden() const;
+    std::string serializarPeliculas() const;
     bool eliminarPorCodigo(const string& codigo);
 
     //METODOS FASEEEE 2
